@@ -76,9 +76,9 @@ Format as a proper business letter with appropriate spacing.`;
         }
       ],
       max_tokens: 1000,
-      temperature: 0.8, // Higher temperature for more varied output
-      presence_penalty: 0.2, // Encourages new topics
-      frequency_penalty: 0.3 // Reduces repetition
+      temperature: 0.8,
+      presence_penalty: 0.2,
+      frequency_penalty: 0.3
     }, {
       headers: {
         'Content-Type': 'application/json',
