@@ -1,0 +1,26 @@
+{
+  "name": "cv-builder-backend",
+  "version": "1.0.0",
+  "description": "Backend for CV Builder application",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.6.1",
+    "express": "^4.21.2",
+    "openai": "^4.104.0"
+  },
+  "keywords": [
+    "cv",
+    "resume",
+    "cover-letter",
+    "ai"
+  ],
+  "author": "Your Name",
+  "license": "MIT"
+}

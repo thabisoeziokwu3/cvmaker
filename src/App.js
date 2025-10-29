@@ -3,7 +3,7 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import './App.css';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
-
+ 
 // Template preview images
 const templatePreviews = {
   'Classic Professional': '/images/classicprofessional.png',
@@ -19,7 +19,7 @@ const templatePreviews = {
   'Startup Entrepreneur': '/images/startupentrepreneur.png',
   'Minimal Tech': '/images/minimaltech.png'
 };
-
+ 
 // Professional color options
 const colorOptions = [
   { name: 'Classic Blue', value: '#2c3e50' },
@@ -35,12 +35,12 @@ const colorOptions = [
   { name: 'Charcoal', value: '#36454F' },
   { name: 'Brick Red', value: '#B22222' }
 ];
-
+ 
 // Template Selector Component
 const TemplateSelector = ({ selectedTemplate, onTemplateChange, selectedColor, onColorChange }) => {
   // Define templates without profile image
   const noImageTemplates = ['Bold Modern', 'Tech Innovator', 'Startup Entrepreneur', 'Minimal Tech'];
-  
+ 
   return (
     <div className="template-selector">
       <h3>Select Template</h3>
@@ -63,7 +63,7 @@ const TemplateSelector = ({ selectedTemplate, onTemplateChange, selectedColor, o
           </div>
         ))}
       </div>
-
+ 
       <div className="color-selector">
         <h3>Select Color Theme</h3>
         <div className="color-options">
@@ -78,7 +78,7 @@ const TemplateSelector = ({ selectedTemplate, onTemplateChange, selectedColor, o
           ))}
         </div>
       </div>
-      
+ 
       {/* Show notification for templates without profile image */}
       {noImageTemplates.includes(selectedTemplate) && (
         <div className="template-info-notice">
@@ -88,7 +88,7 @@ const TemplateSelector = ({ selectedTemplate, onTemplateChange, selectedColor, o
     </div>
   );
 };
-
+ 
  
 // Payment Modal Component
 const PaymentModal = ({ isOpen, onClose, onPaymentSuccess }) => {
@@ -213,7 +213,7 @@ const CVForm = React.memo(({
   currentCertification,
   currentLanguage,
   currentInterest,
-  currentReference,
+  // currentReference,
   handleInputChange,
   addExperience,
   removeExperience,
@@ -231,7 +231,7 @@ const CVForm = React.memo(({
   setCurrentCertification,
   setCurrentLanguage,
   setCurrentInterest,
-  setCurrentReference,
+  // setCurrentReference,
   profileImage,
   handleImageUpload,
   removeProfileImage,
@@ -593,47 +593,9 @@ const CVForm = React.memo(({
       </div>
  
 {/* ADD REFERENCES SECTION HERE */}
+{/* REFERENCES SECTION - FIXED */}
 <div className="form-group">
   <h3>References</h3>
- 
-  {/* Current Reference Input Form */}
-  <div className="reference-input-form">
-    <input
-      type="text"
-      placeholder="Reference Name"
-      value={currentReference.name}
-      onChange={(e) => setCurrentReference({...currentReference, name: e.target.value})}
-    />
-    <input
-      type="text"
-      placeholder="Position"
-      value={currentReference.position}
-      onChange={(e) => setCurrentReference({...currentReference, position: e.target.value})}
-    />
-    <input
-      type="text"
-      placeholder="Company"
-      value={currentReference.company}
-      onChange={(e) => setCurrentReference({...currentReference, company: e.target.value})}
-    />
-    <input
-      type="email"
-      placeholder="Email"
-      value={currentReference.email}
-      onChange={(e) => setCurrentReference({...currentReference, email: e.target.value})}
-    />
-    <input
-      type="tel"
-      placeholder="Phone"
-      value={currentReference.phone}
-      onChange={(e) => setCurrentReference({...currentReference, phone: e.target.value})}
-    />
-    <button type="button" className="add-btn" onClick={addReference}>
-      Add Reference
-    </button>
-  </div>
- 
-  {/* Display Added References */}
   {cvData.references.map((ref, index) => (
     <div key={ref.id} className="reference-item">
       <h4>Reference {index + 1}</h4>
@@ -667,15 +629,20 @@ const CVForm = React.memo(({
         value={ref.phone}
         onChange={(e) => handleInputChange('references', 'phone', e.target.value, index)}
       />
-      <button 
-        type="button" 
-        className="remove-btn"
-        onClick={() => removeReference(ref.id)}
-      >
-        Remove Reference
-      </button>
+      {cvData.references.length > 1 && (
+        <button 
+          type="button" 
+          className="remove-btn"
+          onClick={() => removeReference(ref.id)}
+        >
+          Remove Reference
+        </button>
+      )}
     </div>
   ))}
+  <button type="button" className="add-btn" onClick={addReference}>
+    + Add Reference
+  </button>
 </div>
  
       {/* ADD COVER LETTER GENERATION SECTION HERE */}
@@ -894,7 +861,7 @@ const TechInnovatorTemplate = ({ cvData, selectedColor }) => {
           {/* Profile image removed from this template */}
         </div>
       </div>
-
+ 
       <div className="cv-body">
         {/* ... rest of the template remains the same ... */}
         {cvData.professionalSummary && (
@@ -903,7 +870,7 @@ const TechInnovatorTemplate = ({ cvData, selectedColor }) => {
             <p>{cvData.professionalSummary}</p>
           </div>
         )}
-
+ 
         {cvData.workExperience.some(exp => exp.jobTitle || exp.company) && (
           <div className="section">
             <h2><i className="icon"></i> Experience</h2>
@@ -923,7 +890,7 @@ const TechInnovatorTemplate = ({ cvData, selectedColor }) => {
             ))}
           </div>
         )}
-
+ 
         {cvData.education.some(edu => edu.institution || edu.degree) && (
           <div className="section">
             <h2><i className="icon"></i> Education</h2>
@@ -944,7 +911,7 @@ const TechInnovatorTemplate = ({ cvData, selectedColor }) => {
             ))}
           </div>
         )}
-
+ 
         <div className="two-column-section">
           {cvData.skills.length > 0 && (
             <div className="section">
@@ -956,7 +923,7 @@ const TechInnovatorTemplate = ({ cvData, selectedColor }) => {
               </div>
             </div>
           )}
-
+ 
           {cvData.certifications.length > 0 && (
             <div className="section">
               <h2><i className="icon"></i> Certifications</h2>
@@ -969,7 +936,7 @@ const TechInnovatorTemplate = ({ cvData, selectedColor }) => {
             </div>
           )}
         </div>
-
+ 
         {/* ADD REFERENCES SECTION TO TECH INNOVATOR TEMPLATE */}
         {cvData.references.length > 0 && cvData.references.some(ref => ref.name) && (
           <div className="section">
@@ -988,7 +955,7 @@ const TechInnovatorTemplate = ({ cvData, selectedColor }) => {
             </div>
           </div>
         )}
-
+ 
         <div className="two-column-section">
           {cvData.languages.length > 0 && (
             <div className="section">
@@ -1001,7 +968,7 @@ const TechInnovatorTemplate = ({ cvData, selectedColor }) => {
               ))}
             </div>
           )}
-
+ 
           {cvData.interests.length > 0 && (
             <div className="section">
               <h2><i className="icon"></i> Interests</h2>
@@ -1017,7 +984,7 @@ const TechInnovatorTemplate = ({ cvData, selectedColor }) => {
     </div>
   );
 };
-
+ 
  
 // New Template: Creative Arts
 const CreativeArtsTemplate = ({ cvData, profileImage, selectedColor }) => {
@@ -1490,7 +1457,7 @@ const StartupEntrepreneurTemplate = ({ cvData, selectedColor }) => {
           </div>
         </div>
       </div>
-
+ 
       <div className="cv-body">
         {/* ... rest of the template remains the same ... */}
         {cvData.professionalSummary && (
@@ -1499,7 +1466,7 @@ const StartupEntrepreneurTemplate = ({ cvData, selectedColor }) => {
             <p>{cvData.professionalSummary}</p>
           </div>
         )}
-
+ 
         {cvData.workExperience.some(exp => exp.jobTitle || exp.company) && (
           <div className="section">
             <h2>VENTURES & EXPERIENCE</h2>
@@ -1520,7 +1487,7 @@ const StartupEntrepreneurTemplate = ({ cvData, selectedColor }) => {
             ))}
           </div>
         )}
-
+ 
         {cvData.education.some(edu => edu.institution || edu.degree) && (
           <div className="section">
             <h2>EDUCATION</h2>
@@ -1538,7 +1505,7 @@ const StartupEntrepreneurTemplate = ({ cvData, selectedColor }) => {
             ))}
           </div>
         )}
-
+ 
         <div className="two-column-section">
           {cvData.skills.length > 0 && (
             <div className="section">
@@ -1550,7 +1517,7 @@ const StartupEntrepreneurTemplate = ({ cvData, selectedColor }) => {
               </div>
             </div>
           )}
-
+ 
           {cvData.certifications.length > 0 && (
             <div className="section">
               <h2>ACHIEVEMENTS</h2>
@@ -1563,7 +1530,7 @@ const StartupEntrepreneurTemplate = ({ cvData, selectedColor }) => {
             </div>
           )}
         </div>
-
+ 
         {/* ADD REFERENCES SECTION TO STARTUP ENTREPRENEUR TEMPLATE */}
         {cvData.references.length > 0 && cvData.references.some(ref => ref.name) && (
           <div className="section">
@@ -1582,7 +1549,7 @@ const StartupEntrepreneurTemplate = ({ cvData, selectedColor }) => {
             </div>
           </div>
         )}
-
+ 
         {cvData.interests.length > 0 && (
           <div className="section">
             <h2>INDUSTRY FOCUS</h2>
@@ -1597,7 +1564,7 @@ const StartupEntrepreneurTemplate = ({ cvData, selectedColor }) => {
     </div>
   );
 };
-
+ 
  
 // New Template: Minimal Tech
 const MinimalTechTemplate = ({ cvData, selectedColor }) => {
@@ -1612,7 +1579,7 @@ const MinimalTechTemplate = ({ cvData, selectedColor }) => {
           {/* Profile image removed from this template */}
         </div>
       </div>
-
+ 
       <div className="contact-bar">
         {cvData.personalInfo.email && <span>{cvData.personalInfo.email}</span>}
         {cvData.personalInfo.phone && <span>|</span>}
@@ -1620,7 +1587,7 @@ const MinimalTechTemplate = ({ cvData, selectedColor }) => {
         {cvData.personalInfo.linkedin && <span>|</span>}
         {cvData.personalInfo.linkedin && <span>{cvData.personalInfo.linkedin}</span>}
       </div>
-
+ 
       <div className="cv-body">
         {/* ... rest of the template remains the same ... */}
         {cvData.professionalSummary && (
@@ -1628,7 +1595,7 @@ const MinimalTechTemplate = ({ cvData, selectedColor }) => {
             <p className="summary">{cvData.professionalSummary}</p>
           </div>
         )}
-
+ 
         {cvData.workExperience.some(exp => exp.jobTitle || exp.company) && (
           <div className="section">
             <h2>EXPERIENCE</h2>
@@ -1648,7 +1615,7 @@ const MinimalTechTemplate = ({ cvData, selectedColor }) => {
             ))}
           </div>
         )}
-
+ 
         {cvData.education.some(edu => edu.institution || edu.degree) && (
           <div className="section">
             <h2>EDUCATION</h2>
@@ -1665,7 +1632,7 @@ const MinimalTechTemplate = ({ cvData, selectedColor }) => {
             ))}
           </div>
         )}
-
+ 
         <div className="two-column-section">
           {cvData.skills.length > 0 && (
             <div className="section">
@@ -1677,7 +1644,7 @@ const MinimalTechTemplate = ({ cvData, selectedColor }) => {
               </div>
             </div>
           )}
-
+ 
           {cvData.languages.length > 0 && (
             <div className="section">
               <h2>LANGUAGES</h2>
@@ -1690,7 +1657,7 @@ const MinimalTechTemplate = ({ cvData, selectedColor }) => {
             </div>
           )}
         </div>
-
+ 
         {/* ADD REFERENCES SECTION TO MINIMAL TECH TEMPLATE */}
         {cvData.references.length > 0 && cvData.references.some(ref => ref.name) && (
           <div className="section">
@@ -1713,7 +1680,7 @@ const MinimalTechTemplate = ({ cvData, selectedColor }) => {
     </div>
   );
 };
-
+ 
 const ModernMinimalistTemplate = ({ cvData, profileImage, selectedColor }) => {
   return (
     <div className="cv-template modern-minimalist" style={{ '--primary-color': selectedColor }}>
@@ -2081,7 +2048,7 @@ const BoldModernTemplate = ({ cvData, selectedColor }) => {
           {/* Profile image removed from this template */}
         </div>
       </div>
-
+ 
       <div className="contact-bar">
         <div className="contact-details">
           {cvData.personalInfo.email && <span>{cvData.personalInfo.email}</span>}
@@ -2089,7 +2056,7 @@ const BoldModernTemplate = ({ cvData, selectedColor }) => {
           {cvData.personalInfo.linkedin && <span>{cvData.personalInfo.linkedin}</span>}
         </div>
       </div>
-
+ 
       <div className="cv-body">
         {/* ... rest of the template remains the same ... */}
         {cvData.professionalSummary && (
@@ -2098,7 +2065,7 @@ const BoldModernTemplate = ({ cvData, selectedColor }) => {
             <p>{cvData.professionalSummary}</p>
           </div>
         )}
-
+ 
         <div className="two-column-layout">
           <div className="main-column">
             {cvData.workExperience.some(exp => exp.jobTitle || exp.company) && (
@@ -2118,7 +2085,7 @@ const BoldModernTemplate = ({ cvData, selectedColor }) => {
                 ))}
               </div>
             )}
-
+ 
             {cvData.education.some(edu => edu.institution || edu.degree) && (
               <div className="section">
                 <h2>EDUCATION</h2>
@@ -2137,7 +2104,7 @@ const BoldModernTemplate = ({ cvData, selectedColor }) => {
               </div>
             )}
           </div>
-
+ 
           <div className="sidebar-column">
             {cvData.skills.length > 0 && (
               <div className="section">
@@ -2149,7 +2116,7 @@ const BoldModernTemplate = ({ cvData, selectedColor }) => {
                 </div>
               </div>
             )}
-
+ 
             {cvData.languages.length > 0 && (
               <div className="section">
                 <h2>LANGUAGES</h2>
@@ -2161,7 +2128,7 @@ const BoldModernTemplate = ({ cvData, selectedColor }) => {
                 ))}
               </div>
             )}
-
+ 
             {cvData.certifications.length > 0 && (
               <div className="section">
                 <h2>CERTIFICATIONS</h2>
@@ -2173,7 +2140,7 @@ const BoldModernTemplate = ({ cvData, selectedColor }) => {
                 ))}
               </div>
             )}
-
+ 
             {/* ADD REFERENCES SECTION TO BOLD MODERN TEMPLATE */}
             {cvData.references.length > 0 && cvData.references.some(ref => ref.name) && (
               <div className="section">
@@ -2335,6 +2302,324 @@ const ElegantTraditionalTemplate = ({ cvData, profileImage, selectedColor }) => 
  
 // ... include all your other templates exactly as they were
  
+const LandingPage = ({ onGetStarted }) => {
+  const featuredTemplates = ['Classic Professional', 'Tech Innovator', 'Creative Arts', 'Executive Leadership', 'Modern Minimalist', 'Startup Entrepreneur'];
+
+  const handleTemplateSelect = (template) => {
+    localStorage.setItem('selectedTemplate', template);
+    localStorage.setItem('scrollToForm', 'true');
+    onGetStarted();
+  };
+
+  return (
+    <div className="landing-page-enhanced">
+      {/* Simplified Background Elements */}
+      <div className="floating-shapes">
+        <div className="shape shape-1"></div>
+        <div className="shape shape-2"></div>
+      </div>
+
+{/* TWO-COLUMN HERO SECTION WITH VISUAL BALANCE */}
+<section className="hero-vibrant">
+  <div className="hero-container">
+    {/* Left Column - Content */}
+    <div className="hero-left-column">
+      <div className="logo-container">
+        <img src="/images/logo.png" alt="CVGrid Logo" className="hero-logo" />
+      </div>
+
+      <div className="hero-text-content">
+        <h1 className="hero-title">
+          Create <span className="gradient-text">Professional CVs</span> 
+          <br />That Get You <span className="highlight-text">Hired</span>
+        </h1>
+        
+        <p className="hero-description">
+          Transform your career story into a professional masterpiece with 
+          <strong> 12+ beautiful templates</strong>, instant PDF downloads, 
+          and AI-powered cover letters.
+        </p>
+
+        <div className="hero-actions">
+          <button className="cta-primary" onClick={onGetStarted}>
+            <span className="cta-icon">🚀</span>
+            Start Building Now
+            <span className="price-tag">R19.99</span>
+          </button>
+          <button className="cta-secondary" onClick={onGetStarted}>
+            View All Templates
+          </button>
+        </div>
+      </div>
+    </div>
+
+    {/* Right Column - Visual Element */}
+    <div className="hero-right-column">
+      <div className="cv-preview-showcase">
+        <div className="preview-stack">
+          <div className="preview-card preview-card-1">
+            <div className="card-header" style={{background: 'var(--primary-color)'}}></div>
+            <div className="card-content">
+              <div className="line"></div>
+              <div className="line short"></div>
+              <div className="line"></div>
+              <div className="line short"></div>
+              <div className="line"></div>
+            </div>
+          </div>
+          <div className="preview-card preview-card-2">
+            <div className="card-header" style={{background: '#27ae60'}}></div>
+            <div className="card-content">
+              <div className="line"></div>
+              <div className="line short"></div>
+              <div className="line"></div>
+              <div className="line short"></div>
+            </div>
+          </div>
+          <div className="preview-card preview-card-3">
+            <div className="card-header" style={{background: '#9b59b6'}}></div>
+            <div className="card-content">
+              <div className="line"></div>
+              <div className="line short"></div>
+              <div className="line"></div>
+            </div>
+          </div>
+        </div>
+        <div className="floating-elements">
+          <div className="floating-element element-1">📄</div>
+          <div className="floating-element element-2">🎨</div>
+          <div className="floating-element element-3">🚀</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  {/* Animated Background Elements */}
+  <div className="floating-shapes">
+    <div className="shape shape-1"></div>
+    <div className="shape shape-2"></div>
+    <div className="shape shape-3"></div>
+    <div className="shape shape-4"></div>
+  </div>
+</section>
+
+
+      {/* Templates Showcase Section */}
+      <section className="templates-showcase">
+        <div className="container">
+          <div className="section-header">
+            <h2>Beautiful Templates for Every Professional</h2>
+            <p>From corporate executive to creative freelancer - find your perfect match</p>
+          </div>
+
+          <div className="templates-grid-enhanced">
+            {featuredTemplates.map((template, index) => (
+              <div 
+                key={template} 
+                className="template-card-enhanced"
+                onClick={() => handleTemplateSelect(template)}
+                style={{ animationDelay: `${index * 0.1}s` }}
+              >
+                <div className="template-image-wrapper">
+                  <img 
+                    src={templatePreviews[template]} 
+                    alt={template}
+                    className="template-image-enhanced"
+                  />
+                  <div className="template-overlay-enhanced">
+                    <button className="use-template-btn-enhanced">
+                      Use This Template
+                    </button>
+                  </div>
+                  <div className="template-badge">
+                    {['Tech Innovator', 'Startup Entrepreneur', 'Minimal Tech'].includes(template)}
+                    {['Executive Leadership', 'Corporate Clean'].includes(template)}
+                    {['Creative Arts', 'Creative Timeline'].includes(template)}
+                  </div>
+                </div>
+                <div className="template-info-enhanced">
+                  <h3>{template}</h3>
+                  <div className="template-features">
+                    <span className="template-feature">PDF Export</span>
+                    <span className="template-feature">Color Custom</span>
+                    <span className="template-feature">ATS Friendly</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="section-cta">
+            <button className="view-all-btn" onClick={onGetStarted}>
+              View All 12+ Templates
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* Features Gallery */}
+      <section className="features-gallery">
+        <div className="container">
+          <div className="section-header">
+            <h2>Everything You Need for Job Search Success</h2>
+            <p>Professional tools that make your job application stand out</p>
+          </div>
+
+          <div className="features-grid-vibrant">
+            <div className="feature-card-vibrant">
+              <div className="feature-icon-wrapper">
+                <div className="feature-icon">🎨</div>
+              </div>
+              <h3>Professional Designs</h3>
+              <p>Carefully crafted templates that highlight your experience and catch recruiters' attention</p>
+            </div>
+
+            <div className="feature-card-vibrant">
+              <div className="feature-icon-wrapper">
+                <div className="feature-icon">⚡</div>
+              </div>
+              <h3>Quick & Easy</h3>
+              <p>Fill your details once and switch between templates instantly. No design skills needed</p>
+            </div>
+
+            <div className="feature-card-vibrant">
+              <div className="feature-icon-wrapper">
+                <div className="feature-icon">📄</div>
+              </div>
+              <h3>Instant PDF Download</h3>
+              <p>Download high-quality, print-ready PDFs optimized for both online and physical applications</p>
+            </div>
+
+            <div className="feature-card-vibrant">
+              <div className="feature-icon-wrapper">
+                <div className="feature-icon">🤖</div>
+              </div>
+              <h3>AI Cover Letters</h3>
+              <p>Generate tailored cover letters that match your CV and the specific job you're applying for</p>
+            </div>
+
+            <div className="feature-card-vibrant">
+              <div className="feature-icon-wrapper">
+                <div className="feature-icon">🎯</div>
+              </div>
+              <h3>ATS Optimized</h3>
+              <p>All templates are designed to pass through Applicant Tracking Systems successfully</p>
+            </div>
+
+            <div className="feature-card-vibrant">
+              <div className="feature-icon-wrapper">
+                <div className="feature-icon">💫</div>
+              </div>
+              <h3>Color Customization</h3>
+              <p>Match your CV to your personal brand with professionally curated color schemes</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* How It Works - Visual Steps */}
+      <section className="process-steps">
+        <div className="container">
+          <div className="section-header">
+            <h2>Create Your Perfect CV in 3 Simple Steps</h2>
+            <p>Quick, easy, and professional - start to finish in minutes</p>
+          </div>
+
+          <div className="steps-visual">
+            <div className="step-item">
+              <div className="step-number">1</div>
+              <div className="step-content">
+                <h3>Choose Your Template</h3>
+                <p>Browse our collection and pick the design that best represents your professional story</p>
+              </div>
+              <div className="step-visual">🎯</div>
+            </div>
+
+            <div className="step-item">
+              <div className="step-number">2</div>
+              <div className="step-content">
+                <h3>Fill in Your Details</h3>
+                <p>Use our intuitive form to add your experience, education, skills, and achievements</p>
+              </div>
+              <div className="step-visual">✍️</div>
+            </div>
+
+            <div className="step-item">
+              <div className="step-number">3</div>
+              <div className="step-content">
+                <h3>Download & Apply</h3>
+                <p>Get your professionally formatted PDF and start applying to your dream jobs</p>
+              </div>
+              <div className="step-visual">🚀</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Final CTA Section */}
+      <section className="final-cta">
+        <div className="cta-container">
+          <div className="cta-content">
+            <h2>Ready to Transform Your Job Search?</h2>
+            <p className="cta-subtitle">
+              Join thousands of professionals who landed interviews with our CV builder. 
+              <strong> No subscriptions, no hidden fees</strong> - just one simple payment.
+            </p>
+            
+            <div className="pricing-highlight">
+              <div className="price-main">R19.99</div>
+              <div className="price-description">One-time payment • Lifetime access</div>
+            </div>
+
+            <div className="cta-features">
+              <div className="cta-feature">✓ All 12+ Templates Included</div>
+              <div className="cta-feature">✓ Unlimited CV Downloads</div>
+              <div className="cta-feature">✓ AI Cover Letter Generator</div>
+              <div className="cta-feature">✓ No Watermarks Ever</div>
+            </div>
+
+            <button className="cta-final-button" onClick={onGetStarted}>
+              <span className="button-text">Get Started Now</span>
+              <span className="button-guarantee">7-Day Money Back Guarantee</span>
+            </button>
+
+            <div className="security-badge">
+              🔒 Secure payment • No registration required • Instant access
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+
+      <footer className="vibrant-footer">
+        <div className="container">
+          <div className="footer-content">
+            <div className="footer-brand">
+              <img src="/images/logo.png" alt="CVGrid" className="footer-logo" />
+              <p>Professional CV Builder</p>
+            </div>
+            <div className="footer-links">
+              <div className="footer-section">
+                <h4>Support</h4>
+                <a href="mailto:support@cvgrid.com">Email Support</a>
+              </div>
+              <div className="footer-section">
+                <h4>Company</h4>
+                <a href="#contact">Contact</a>
+              </div>
+            </div>
+          </div>
+          <div className="footer-bottom">
+            <p>&copy; 2024 CVGrid. All rights reserved. • support@cvgrid.com</p>
+          </div>
+        </div>
+      </footer>
+
+    </div>
+  );
+};
+ 
 // CVBuilder Component
 const CVBuilder = () => {
   const [cvData, setCvData] = useState({
@@ -2379,13 +2664,13 @@ const CVBuilder = () => {
   const [currentCertification, setCurrentCertification] = useState({ name: '', issuer: '', year: '' });
   const [currentLanguage, setCurrentLanguage] = useState({ name: '', proficiency: '' });
   const [currentInterest, setCurrentInterest] = useState('');
-  const [currentReference, setCurrentReference] = useState({ 
-    name: '', 
-    position: '', 
-    company: '', 
-    email: '', 
-    phone: '' 
-  });
+  // const [currentReference, setCurrentReference] = useState({ 
+  //   name: '', 
+  //   position: '', 
+  //   company: '', 
+  //   email: '', 
+  //   phone: '' 
+  // });
   const [profileImage, setProfileImage] = useState(null);
   const [selectedTemplate, setSelectedTemplate] = useState('Classic Professional');
   const [selectedColor, setSelectedColor] = useState('#2c3e50');
@@ -2401,6 +2686,8 @@ const CVBuilder = () => {
  
   const fileInputRef = useRef(null);
   const formContainerRef = useRef(null);
+
+  
  
   // ADD FALLBACK COVER LETTER GENERATION
 const generateBasicCoverLetter = useCallback(() => {
@@ -2457,9 +2744,12 @@ const generateCoverLetter = useCallback(async () => {
   setIsCoverLetterModalOpen(true);
  
   try {
-    console.log('Sending request to generate cover letter...');
+    console.log('🔄 Starting cover letter generation...');
  
-    const response = await fetch('/.netlify/functions/generate-cover-letter', {
+    // Use your backend server URL - FIXED ENDPOINT
+    const backendUrl = 'http://localhost:5000';
+ 
+    const response = await fetch(`${backendUrl}/api/generate-cover-letter`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -2475,23 +2765,28 @@ const generateCoverLetter = useCallback(async () => {
       })
     });
  
-    console.log('Response status:', response.status);
+    const data = await response.json();
  
     if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || `Server error: ${response.status}`);
+      throw new Error(data.error || `Server error: ${response.status}`);
     }
  
-    const data = await response.json();
-    console.log('Cover letter generated successfully');
+    if (!data.success) {
+      throw new Error(data.error || 'Failed to generate cover letter');
+    }
  
+    console.log('✅ Cover letter generated successfully');
     setCoverLetter(data.coverLetter);
  
   } catch (error) {
-    console.error('Error generating cover letter:', error);
+    console.error('❌ Error generating cover letter:', error);
  
-    // Fallback to basic cover letter if AI generation fails
-    alert(`AI generation temporarily unavailable. Using basic template instead.`);
+    // Fallback to basic cover letter with better error message
+    const errorMsg = error.message.includes('OpenAI API key') 
+      ? 'Server configuration error. Using basic template instead.'
+      : `AI generation failed: ${error.message}. Using basic template instead.`;
+ 
+    alert(errorMsg);
     generateBasicCoverLetter();
   } finally {
     setIsGeneratingCoverLetter(false);
@@ -2559,24 +2854,29 @@ const generateCoverLetter = useCallback(async () => {
     localStorage.setItem('selectedColor', selectedColor);
   }, [cvData, profileImage, selectedTemplate, selectedColor]);
  
-  const handleInputChange = useCallback((section, field, value, index = null) => {
+const handleInputChange = useCallback((section, field, value, index = null) => {
+  setCvData(prevCvData => {
     if (index !== null) {
-      const updatedArray = [...cvData[section]];
-      updatedArray[index][field] = value;
-      setCvData({ ...cvData, [section]: updatedArray });
+      const updatedArray = [...prevCvData[section]];
+      updatedArray[index] = {
+        ...updatedArray[index],
+        [field]: value
+      };
+      return { ...prevCvData, [section]: updatedArray };
     } else if (section.includes('.')) {
       const [mainSection, subSection] = section.split('.');
-      setCvData({
-        ...cvData,
+      return {
+        ...prevCvData,
         [mainSection]: {
-          ...cvData[mainSection],
+          ...prevCvData[mainSection],
           [subSection]: value
         }
-      });
+      };
     } else {
-      setCvData({ ...cvData, [section]: value });
+      return { ...prevCvData, [section]: value };
     }
-  }, [cvData]);
+  });
+}, []);
  
   const addExperience = useCallback(() => {
     setCvData({
@@ -2692,22 +2992,29 @@ const generateCoverLetter = useCallback(async () => {
   }, [cvData]);
  
   // ADD REFERENCE FUNCTIONS
-  const addReference = useCallback(() => {
-    if (currentReference.name.trim() !== '' && currentReference.position.trim() !== '') {
-      setCvData({
-        ...cvData,
-        references: [...cvData.references, { ...currentReference, id: Date.now() }]
-      });
-      setCurrentReference({ name: '', position: '', company: '', email: '', phone: '' });
-    }
-  }, [cvData, currentReference]);
+const addReference = useCallback(() => {
+  setCvData(prevCvData => ({
+    ...prevCvData,
+    references: [
+      ...prevCvData.references, 
+      { 
+        id: Date.now(),
+        name: '',
+        position: '',
+        company: '',
+        email: '',
+        phone: ''
+      }
+    ]
+  }));
+}, []);
  
-  const removeReference = useCallback((id) => {
-    setCvData({
-      ...cvData,
-      references: cvData.references.filter(ref => ref.id !== id)
-    });
-  }, [cvData]);
+const removeReference = useCallback((id) => {
+  setCvData(prevCvData => ({
+    ...prevCvData,
+    references: prevCvData.references.filter(ref => ref.id !== id)
+  }));
+}, []);
  
   const handleImageUpload = useCallback((event) => {
     const file = event.target.files[0];
@@ -2815,17 +3122,16 @@ const generateCoverLetter = useCallback(async () => {
  
 const handlePaymentSuccess = () => {
   const cvElement = document.getElementById('cv-template');
- 
+  
   // Add PDF-specific styling
   cvElement.classList.add('pdf-export');
- 
+
   // Set A4 dimensions for capture
   const a4Width = 210; // mm
-  const a4Height = 297; // mm
-  // const pxToMm = 3.78; // Conversion factor
- 
+  // const a4Height = 297; // mm
+  
   html2canvas(cvElement, {
-    scale: 2,
+    scale: 3, // Higher scale for better quality
     useCORS: true,
     logging: false,
     backgroundColor: '#ffffff',
@@ -2836,30 +3142,40 @@ const handlePaymentSuccess = () => {
     onclone: function(clonedDoc) {
       const clonedElement = clonedDoc.getElementById('cv-template');
       if (clonedElement) {
-        // Force A4 dimensions during capture
+        // Apply PDF-optimized styles
         clonedElement.style.width = a4Width + 'mm';
-        clonedElement.style.minHeight = 'auto';
-        clonedElement.style.maxHeight = a4Height + 'mm';
-        clonedElement.style.overflow = 'visible';
+        clonedElement.style.padding = '10mm';
+        clonedElement.style.margin = '0';
+        clonedElement.style.boxSizing = 'border-box';
+        
+        // Reduce font sizes for PDF
+        const allElements = clonedElement.querySelectorAll('*');
+        allElements.forEach(el => {
+          const style = window.getComputedStyle(el);
+          const fontSize = parseFloat(style.fontSize);
+          if (fontSize > 12) {
+            el.style.fontSize = Math.max(fontSize * 0.85, 10) + 'px';
+          }
+        });
       }
     }
   }).then(canvas => {
     cvElement.classList.remove('pdf-export');
- 
+    
     const imgData = canvas.toDataURL('image/png', 1.0);
     const pdf = new jsPDF('p', 'mm', 'a4');
     const pdfWidth = pdf.internal.pageSize.getWidth();
     const pdfHeight = pdf.internal.pageSize.getHeight();
- 
-    // Calculate dimensions to fit A4
+
+    // Calculate dimensions to fit A4 perfectly
     const imgWidth = canvas.width;
     const imgHeight = canvas.height;
-    const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
- 
-    // Center the image on the page
+    const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight) * 0.95; // 95% to ensure fit
+    
+    // Center the image on the page with minimal margins
     const imgX = (pdfWidth - imgWidth * ratio) / 2;
-    const imgY = 0;
- 
+    const imgY = (pdfHeight - imgHeight * ratio) / 2;
+
     pdf.addImage(imgData, 'PNG', imgX, imgY, imgWidth * ratio, imgHeight * ratio);
     pdf.save(`${cvData.personalInfo.fullName || 'cv'}.pdf`);
   }).catch(error => {
@@ -2871,11 +3187,11 @@ const handlePaymentSuccess = () => {
  
 const renderTemplate = () => {
   const noImageTemplates = ['Bold Modern', 'Tech Innovator', 'Startup Entrepreneur', 'Minimal Tech'];
-  
+ 
   const templateProps = noImageTemplates.includes(selectedTemplate) 
     ? { cvData, selectedColor } 
     : { cvData, profileImage, selectedColor };
-
+ 
   switch (selectedTemplate) {
     case 'Classic Professional':
       return <ClassicProfessionalTemplate {...templateProps} />;
@@ -2910,7 +3226,10 @@ const renderTemplate = () => {
     <div className="app">
       <header className="app-header">
         <div className="header-content">
-          <h1>ProCV Builder</h1>
+          <div className="header-logo">
+            <img src="/images/logo.png" alt="CVGrid" className="app-logo" />
+            {/* <span className="app-name">CVGrid</span> */}
+          </div>
         </div>
       </header>
  
@@ -2922,7 +3241,7 @@ const renderTemplate = () => {
             currentCertification={currentCertification}
             currentLanguage={currentLanguage}
             currentInterest={currentInterest}
-            currentReference={currentReference}
+            // currentReference={currentReference}
             handleInputChange={handleInputChange}
             addExperience={addExperience}
             removeExperience={removeExperience}
@@ -2940,7 +3259,7 @@ const renderTemplate = () => {
             setCurrentCertification={setCurrentCertification}
             setCurrentLanguage={setCurrentLanguage}
             setCurrentInterest={setCurrentInterest}
-            setCurrentReference={setCurrentReference}
+            // setCurrentReference={setCurrentReference}
             profileImage={profileImage}
             handleImageUpload={handleImageUpload}
             removeProfileImage={removeProfileImage}
@@ -3021,7 +3340,14 @@ const renderTemplate = () => {
  
 // ADD THE MISSING APP COMPONENT
 const App = () => {
-  return <CVBuilder />;
+  const [showBuilder, setShowBuilder] = useState(false);
+ 
+  if (showBuilder) {
+    return <CVBuilder />;
+  }
+ 
+  return <LandingPage onGetStarted={() => setShowBuilder(true)} />;
 };
  
 export default App;
+ 

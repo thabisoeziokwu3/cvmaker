@@ -27,3 +27,14 @@ yarn-error.log*
 
 # Local Netlify folder
 .netlify
+
+# Add these lines to your existing .gitignore
+echo "" >> .gitignore
+echo "# Server-specific ignores" >> .gitignore
+echo "server/node_modules/" >> .gitignore
+echo "server/.env" >> .gitignore
+echo "server/.env.local" >> .gitignore
+echo "server/.env.production" >> .gitignore
+echo "server/package-lock.json" >> .gitignore
+echo "server/logs/" >> .gitignore
+echo "server/*.log" >> .gitignore
