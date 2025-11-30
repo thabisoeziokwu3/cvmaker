@@ -1,8 +1,10 @@
-// App.js
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import './App.css';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
+
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
+
  
 // Template preview images
 const templatePreviews = {
@@ -51,15 +53,25 @@ const TemplateSelector = ({ selectedTemplate, onTemplateChange, selectedColor, o
             className={`template-option ${selectedTemplate === template ? 'selected' : ''}`}
             onClick={() => onTemplateChange(template)}
           >
-            <img 
-              src={templatePreviews[template]} 
-              alt={`${template} template preview`}
-              className="template-preview-image"
-            />
+            <div className="template-preview-container">
+              <img 
+                src={templatePreviews[template]} 
+                alt={`${template} template preview`}
+                className="template-preview-image"
+                onError={(e) => {
+                  // Fallback if image fails to load
+                  e.target.style.backgroundColor = '#f8f9fa';
+                  e.target.style.display = 'flex';
+                  e.target.style.alignItems = 'center';
+                  e.target.style.justifyContent = 'center';
+                  e.target.innerHTML = `<span>${template}</span>`;
+                }}
+              />
+            </div>
             <div className="template-name">{template}</div>
-            {noImageTemplates.includes(template) && (
+            {/* {noImageTemplates.includes(template) && (
               <div className="template-note">No Profile Image</div>
-            )}
+            )} */}
           </div>
         ))}
       </div>
@@ -89,46 +101,844 @@ const TemplateSelector = ({ selectedTemplate, onTemplateChange, selectedColor, o
   );
 };
  
- 
-// Payment Modal Component
-const PaymentModal = ({ isOpen, onClose, onPaymentSuccess }) => {
-  const [isProcessing, setIsProcessing] = useState(false);
- 
-  const handlePayment = () => {
-    setIsProcessing(true);
-    // Simulate payment processing
+
+
+const downloadCVAfterPayment = (packageData) => {
+  return new Promise((resolve) => {
+    console.log('🔄 Starting CV download with smart auto-sizing...', packageData);
+
+    const tempContainer = document.createElement('div');
+    tempContainer.style.position = 'fixed';
+    tempContainer.style.left = '-9999px';
+    tempContainer.style.top = '0';
+    tempContainer.style.width = '210mm';
+    tempContainer.style.background = 'white';
+    tempContainer.style.padding = '20px';
+    tempContainer.style.zIndex = '9999';
+    
+
+    const style = document.createElement('style');
+    style.textContent = `
+      .smart-auto-size {
+        font-size: 14px;
+        line-height: 1.4;
+      }
+      .smart-auto-size .section {
+        margin-bottom: 12px;
+      }
+      .smart-auto-size .experience-item,
+      .smart-auto-size .education-item {
+        margin-bottom: 10px;
+        padding-bottom: 8px;
+      }
+      .smart-auto-size h1 {
+        font-size: 24px;
+        margin-bottom: 8px;
+      }
+      .smart-auto-size h2 {
+        font-size: 16px;
+        margin-bottom: 6px;
+      }
+      .smart-auto-size h3 {
+        font-size: 14px;
+        margin-bottom: 4px;
+      }
+      .smart-auto-size p {
+        margin-bottom: 6px;
+        line-height: 1.3;
+      }
+      
+      /* Compact mode for overflow */
+      .smart-compact-mode {
+        font-size: 13px !important;
+        line-height: 1.3 !important;
+      }
+      .smart-compact-mode .section {
+        margin-bottom: 8px !important;
+      }
+      .smart-compact-mode .experience-item,
+      .smart-compact-mode .education-item {
+        margin-bottom: 6px !important;
+        padding-bottom: 4px !important;
+      }
+      .smart-compact-mode p {
+        margin-bottom: 4px !important;
+        line-height: 1.2 !important;
+      }
+      .smart-compact-mode h1 {
+        font-size: 22px !important;
+        margin-bottom: 6px !important;
+      }
+      .smart-compact-mode h2 {
+        font-size: 15px !important;
+        margin-bottom: 4px !important;
+      }
+      .smart-compact-mode h3 {
+        font-size: 13px !important;
+        margin-bottom: 3px !important;
+      }
+      
+      /* Ultra compact for severe overflow */
+      .smart-ultra-compact {
+        font-size: 12px !important;
+        line-height: 1.25 !important;
+      }
+      .smart-ultra-compact .section {
+        margin-bottom: 6px !important;
+      }
+      .smart-ultra-compact .experience-item,
+      .smart-ultra-compact .education-item {
+        margin-bottom: 4px !important;
+        padding-bottom: 2px !important;
+      }
+      .smart-ultra-compact p {
+        margin-bottom: 3px !important;
+        line-height: 1.15 !important;
+      }
+      .smart-ultra-compact h1 {
+        font-size: 20px !important;
+        margin-bottom: 4px !important;
+      }
+      .smart-ultra-compact h2 {
+        font-size: 14px !important;
+        margin-bottom: 3px !important;
+      }
+      .smart-ultra-compact h3 {
+        font-size: 12px !important;
+        margin-bottom: 2px !important;
+      }
+    `;
+    tempContainer.appendChild(style);
+    
+    const tempRoot = document.createElement('div');
+    tempRoot.id = 'temp-cv-template';
+    tempRoot.className = 'smart-auto-size'; // Apply base smart sizing
+    tempContainer.appendChild(tempRoot);
+    document.body.appendChild(tempContainer);
+
+    const { createRoot } = require('react-dom/client');
+    const root = createRoot(tempRoot);
+    
+    let TemplateComponent;
+    switch (packageData.selectedTemplate || 'Classic Professional') {
+      case 'Classic Professional':
+        TemplateComponent = ClassicProfessionalTemplate;
+        break;
+      case 'Modern Minimalist':
+        TemplateComponent = ModernMinimalistTemplate;
+        break;
+      case 'Corporate Clean':
+        TemplateComponent = CorporateCleanTemplate;
+        break;
+      case 'Creative Timeline':
+        TemplateComponent = CreativeTimelineTemplate;
+        break;
+      case 'Bold Modern':
+        TemplateComponent = BoldModernTemplate;
+        break;
+      case 'Elegant Traditional':
+        TemplateComponent = ElegantTraditionalTemplate;
+        break;
+      case 'Tech Innovator':
+        TemplateComponent = TechInnovatorTemplate;
+        break;
+      case 'Creative Arts':
+        TemplateComponent = CreativeArtsTemplate;
+        break;
+      case 'Academic Scholar':
+        TemplateComponent = AcademicScholarTemplate;
+        break;
+      case 'Executive Leadership':
+        TemplateComponent = ExecutiveLeadershipTemplate;
+        break;
+      case 'Startup Entrepreneur':
+        TemplateComponent = StartupEntrepreneurTemplate;
+        break;
+      case 'Minimal Tech':
+        TemplateComponent = MinimalTechTemplate;
+        break;
+      default:
+        TemplateComponent = ClassicProfessionalTemplate;
+    }
+
+    const noImageTemplates = ['Bold Modern', 'Tech Innovator', 'Startup Entrepreneur', 'Minimal Tech'];
+    const templateProps = noImageTemplates.includes(packageData.selectedTemplate || 'Classic Professional') 
+      ? { 
+          cvData: packageData.cvData, 
+          selectedColor: packageData.selectedColor || '#2c3e50'
+        } 
+      : { 
+          cvData: packageData.cvData, 
+          profileImage: null,
+          selectedColor: packageData.selectedColor || '#2c3e50'
+        };
+
+    root.render(
+      React.createElement(TemplateComponent, templateProps)
+    );
+
+    // Wait for render and apply smart sizing
     setTimeout(() => {
-      setIsProcessing(false);
-      onPaymentSuccess();
-      onClose();
+      const cvElement = document.getElementById('temp-cv-template');
+      if (!cvElement) {
+        console.error('❌ Temporary CV template element not found');
+        document.body.removeChild(tempContainer);
+        resolve(false);
+        return;
+      }
+
+      // Smart auto-sizing function
+      const applySmartAutoSizing = (element) => {
+        const A4_HEIGHT_MM = 297;
+        const A4_HEIGHT_PX = A4_HEIGHT_MM * 3.78;
+        
+        const contentHeight = element.scrollHeight;
+        const maxHeight = A4_HEIGHT_PX;
+        
+        console.log(`📏 Content height: ${contentHeight}px, Max height: ${maxHeight}px`);
+        
+        if (contentHeight <= maxHeight) {
+          console.log('✅ Content fits perfectly with base sizing');
+          return 'perfect-fit';
+        }
+        
+        const overflowRatio = contentHeight / maxHeight;
+        console.log(`📊 Overflow ratio: ${overflowRatio.toFixed(2)}`);
+        
+        // Remove previous sizing classes
+        element.classList.remove('smart-compact-mode', 'smart-ultra-compact');
+        
+        if (overflowRatio > 1.4) {
+          // Severe overflow - apply ultra compact
+          element.classList.add('smart-ultra-compact');
+          console.log('🔻 Severe overflow, applying ultra compact mode');
+          return 'ultra-compact';
+        } else if (overflowRatio > 1.2) {
+          // Moderate overflow - apply compact mode
+          element.classList.add('smart-compact-mode');
+          console.log('🔻 Moderate overflow, applying compact mode');
+          return 'compact';
+        } else {
+          // Mild overflow - keep base smart sizing
+          console.log('🔻 Mild overflow, keeping base smart sizing');
+          return 'base';
+        }
+      };
+
+      // Apply smart sizing
+      const sizingMode = applySmartAutoSizing(cvElement);
+      
+      // If still overflowing after CSS adjustments, apply minimal scaling
+      setTimeout(() => {
+        const finalHeight = cvElement.scrollHeight;
+        const A4_HEIGHT_PX = 297 * 3.78;
+        
+        if (finalHeight > A4_HEIGHT_PX) {
+          const overflowRatio = finalHeight / A4_HEIGHT_PX;
+          let scaleFactor = 1;
+          
+          // Only scale if absolutely necessary
+          if (overflowRatio > 1.1) {
+            scaleFactor = 0.95;
+          } else if (overflowRatio > 1.05) {
+            scaleFactor = 0.98;
+          }
+          
+          if (scaleFactor < 1) {
+            console.log(`🎯 Applying minimal scale factor: ${scaleFactor}`);
+            cvElement.style.transform = `scale(${scaleFactor})`;
+            cvElement.style.transformOrigin = 'top center';
+            cvElement.style.width = `${210 / scaleFactor}mm`;
+          }
+        }
+
+        console.log('📄 Final CV Element ready for PDF with smart sizing:', sizingMode);
+
+        html2canvas(cvElement, {
+          scale: 2,
+          useCORS: true,
+          logging: true,
+          backgroundColor: '#ffffff',
+          width: cvElement.scrollWidth,
+          height: cvElement.scrollHeight,
+        })
+          .then((canvas) => {
+            const imgData = canvas.toDataURL('image/png');
+            const pdf = new jsPDF('p', 'mm', 'a4');
+            const pdfWidth = pdf.internal.pageSize.getWidth();
+            const pdfHeight = pdf.internal.pageSize.getHeight();
+
+            const imgProps = pdf.getImageProperties(imgData);
+            const ratio = imgProps.width / imgProps.height;
+            let pdfImageHeight = pdfWidth / ratio;
+
+            // Ensure the image fits within A4 height
+            if (pdfImageHeight > pdfHeight) {
+              pdfImageHeight = pdfHeight;
+            }
+
+            pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfImageHeight);
+            pdf.save(`${packageData.cvData?.personalInfo?.fullName || 'cv'}.pdf`);
+
+            console.log('✅ CV downloaded successfully with smart auto-sizing');
+            
+            // Clean up
+            root.unmount();
+            document.body.removeChild(tempContainer);
+            resolve(true);
+          })
+          .catch((error) => {
+            console.error('❌ CV download failed:', error);
+            root.unmount();
+            document.body.removeChild(tempContainer);
+            resolve(false);
+          });
+      }, 100); // Small delay for CSS to apply
     }, 2000);
+  });
+};
+
+// 2) Build a basic cover letter string (used when no AI letter is returned)
+const buildBasicCoverLetterText = (company, position, dataToUse) => {
+  if (!company || !position) {
+    console.error('❌ Company and position required for cover letter');
+    return '';
+  }
+
+  const currentDate = new Date().toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+
+  const summary =
+    dataToUse.professionalSummary ||
+    `My experience in ${dataToUse.personalInfo?.profession || 'this field'} aligns with your requirements.`;
+
+  const skillsSummary =
+    dataToUse.skills && dataToUse.skills.length > 0
+      ? dataToUse.skills.slice(0, 3).join(', ')
+      : 'key areas';
+
+  const firstRole =
+    dataToUse.workExperience && dataToUse.workExperience.length > 0
+      ? dataToUse.workExperience[0].jobTitle || 'a professional'
+      : 'a professional';
+
+  return `${currentDate}
+
+Hiring Manager
+${company}
+
+Dear Hiring Manager,
+
+I am writing to apply for the ${position} position at ${company}. ${summary}
+
+As ${firstRole}, I have developed skills in ${skillsSummary}.
+
+I am impressed by ${company}'s work and believe I can contribute to your team. Thank you for considering my application.
+
+Sincerely,
+
+${dataToUse.personalInfo?.fullName || 'Your Name'}
+${dataToUse.personalInfo?.email || ''}${
+    dataToUse.personalInfo?.phone ? ` | ${dataToUse.personalInfo.phone}` : ''
+  }${
+    dataToUse.personalInfo?.linkedin ? ` | LinkedIn: ${dataToUse.personalInfo.linkedin}` : ''
+  }`;
+};
+
+
+const cleanCoverLetterText = (rawContent, fullName, company) => {
+  if (!rawContent) return '';
+
+  const currentDate = new Date().toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+
+  let lines = rawContent
+    .split('\n')
+    .map(l => l.trim())
+    .filter(l => l.length > 0);
+
+  const removePatterns = [
+    /^[0-9].*(street|st\.|road|rd\.|avenue|ave\.|drive|dr\.|lane|ln\.|boulevard|blvd\.|close|crescent|south africa).*$/i,
+    /.*\b(city|state|province|zip|postal|code)\b.*/i,
+    /^\s*\+[0-9]{1,3}.*/,  
+    /\b\d{4,}/,            
+    /\[.*?\]/g             
+  ];
+
+  lines = lines.filter(line => {
+    return !removePatterns.some(pattern => pattern.test(line.toLowerCase()));
+  });
+
+ 
+  const dearIndex = lines.findIndex(l => l.toLowerCase().startsWith('dear'));
+  let bodyLines = dearIndex !== -1 ? lines.slice(dearIndex + 1) : lines;
+
+
+  let paragraphs = [];
+  let buffer = [];
+
+  const pushBuffer = () => {
+    if (buffer.length > 0) {
+      paragraphs.push(buffer.join(' '));
+      buffer = [];
+    }
   };
- 
+
+  bodyLines.forEach(line => {
+    buffer.push(line);
+
+    // If line ends with sentence punctuation, force new paragraph
+    if (/[.!?]$/.test(line)) {
+      pushBuffer();
+    }
+  });
+
+  pushBuffer(); // flush last one
+
+  // Clean paragraphs
+  paragraphs = paragraphs.map(p =>
+    p
+      .replace(/\s+/g, ' ') // collapse double spaces
+      .trim()
+  );
+
+  // STEP 5: Construct final clean letter
+  const finalLetter = `
+${currentDate}
+
+Hiring Manager  
+${company}
+
+Dear Hiring Manager,
+
+${paragraphs.join('\n\n')}
+
+Warm Regards,  
+${fullName}
+`.trim();
+
+  return finalLetter;
+};
+
+
+
+// 3) Save the cover letter string as a PDF
+const downloadCoverLetterPDF = (content, type, dataToUse) => {
+  if (!content) {
+    console.error('❌ No cover letter content to download');
+    return;
+  }
+
+  const pdf = new jsPDF();
+  const pageWidth = pdf.internal.pageSize.getWidth();
+  const margin = 20;
+  const maxWidth = pageWidth - 2 * margin;
+
+  pdf.setFontSize(10);
+  pdf.setFont('helvetica', 'normal');
+
+  let yPosition = 30;
+  const lines = content.split('\n');
+
+  lines.forEach((line) => {
+    const trimmedLine = line.trim();
+
+    if (!trimmedLine) {
+      yPosition += 3;
+      return;
+    }
+
+    if (trimmedLine.includes('Dear')) {
+      yPosition += 8;
+      pdf.setFontSize(10);
+    } else if (trimmedLine.includes('Sincerely') || trimmedLine.includes('Best regards')) {
+      yPosition += 12;
+      pdf.setFontSize(10);
+    } else if (trimmedLine === (dataToUse.personalInfo?.fullName || 'Your Name')) {
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(11);
+    } else if (
+      trimmedLine.includes('@') ||
+      trimmedLine.includes('LinkedIn') ||
+      trimmedLine.includes('Phone')
+    ) {
+      pdf.setFontSize(9);
+      pdf.setFont('helvetica', 'normal');
+    } else {
+      pdf.setFontSize(10);
+      pdf.setFont('helvetica', 'normal');
+    }
+
+    const wrapped = pdf.splitTextToSize(trimmedLine, maxWidth);
+    wrapped.forEach((textLine) => {
+      if (yPosition > 270) {
+        pdf.addPage();
+        yPosition = 20;
+      }
+      pdf.text(textLine, margin, yPosition);
+      yPosition += 5;
+    });
+  });
+
+  const safeName = (dataToUse.personalInfo?.fullName || 'Cover Letter').trim();
+  pdf.save(`${safeName} Cover Letter.pdf`);
+};
+
+
+const downloadCoverLetterAfterPayment = (packageData) => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      const dataToUse = packageData.cvData || {};
+      const company = packageData.coverLetterCompany;
+      const position = packageData.coverLetterPosition;
+      const fullName = dataToUse.personalInfo?.fullName || 'Your Name';
+
+      let rawText = '';
+
+      if (packageData.packageType === 'basic') {
+
+        rawText = buildBasicCoverLetterText(company, position, dataToUse);
+      } else {
+
+        if (packageData.aiCoverLetter) {
+          rawText = packageData.aiCoverLetter;
+        } else {
+          rawText = buildBasicCoverLetterText(company, position, dataToUse);
+        }
+      }
+
+
+      const finalText = cleanCoverLetterText(rawText, fullName, company);
+
+
+      downloadCoverLetterPDF(finalText, 'cover-letter', dataToUse);
+
+      console.log('✅ Cover letter downloaded successfully');
+      resolve(true);
+    }, 1000);
+  });
+};
+
+
+// 5) Main function: trigger BOTH downloads and clean up localStorage
+const triggerFileDownloads = async (packageData) => {
+  if (!packageData) {
+    console.error('❌ triggerFileDownloads called with no packageData');
+    return;
+  }
+
+  console.log('📄 Triggering downloads with packageData:', packageData);
+
+  const cvResult = await downloadCVAfterPayment(packageData);
+  const clResult = await downloadCoverLetterAfterPayment(packageData);
+
+  if (cvResult && clResult) {
+    console.log('✅ All downloads completed. Cleaning up localStorage.');
+    localStorage.removeItem('pendingPackage');
+    localStorage.removeItem('paymentComplete');
+  } else {
+    console.warn('⚠️ One or more downloads failed. Keeping localStorage for retry.');
+  }
+};
+
+const DirectPaymentModal = ({ 
+  isOpen, 
+  onClose, 
+  selectedPackage, 
+  cvData,
+  coverLetterCompany,
+  coverLetterPosition 
+}) => {
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [yocoSDK, setYocoSDK] = useState(null);
+  const [cardError, setCardError] = useState('');
+
+  // Initialize Yoco SDK
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const initYoco = () => {
+      if (window.YocoSDK) {
+        try {
+          const yoco = new window.YocoSDK({
+            publicKey: process.env.REACT_APP_YOCO_PUBLIC_KEY || 'pk_test_xxxxxxxxxxxxxxxx',
+          });
+          console.log('✅ Yoco SDK initialized');
+          setYocoSDK(yoco);
+        } catch (error) {
+          console.error('❌ Yoco SDK initialization failed:', error);
+        }
+      } else {
+        console.log('🔄 Loading Yoco SDK...');
+        const script = document.createElement('script');
+        script.src = 'https://js.yoco.com/sdk/v1/yoco-sdk-web.js';
+        script.async = true;
+        script.onload = () => {
+          console.log('✅ Yoco SDK script loaded');
+          try {
+            const yoco = new window.YocoSDK({
+              publicKey: process.env.REACT_APP_YOCO_PUBLIC_KEY || 'pk_test_xxxxxxxxxxxxxxxx',
+            });
+            setYocoSDK(yoco);
+          } catch (error) {
+            console.error('❌ Yoco SDK initialization failed:', error);
+          }
+        };
+        script.onerror = (error) => {
+          console.error('❌ Failed to load Yoco SDK script:', error);
+        };
+        document.body.appendChild(script);
+      }
+    };
+
+    initYoco();
+  }, [isOpen]);
+
+  const paymentOptions = {
+    'basic': {
+      title: 'CV + Basic Cover Letter',
+      price: 'R20.00',
+      amount: 2000,
+      description: 'Professional CV + Basic template-based cover letter'
+    },
+    'ai': {
+      title: 'CV + AI Cover Letter',
+      price: 'R26.00',
+      amount: 2600,
+      description: 'Professional CV + AI-powered personalized cover letter'
+    }
+  };
+
+
+const handlePayment = async () => {
+  setIsProcessing(true);
+  setCardError('');
+
+  try {
+    console.log('🔄 Creating Yoco checkout session...');
+
+    // Get the absolute latest data
+    const latestCvData = JSON.parse(localStorage.getItem('cvData') || '{}');
+    const savedTemplate = localStorage.getItem('selectedTemplate') || 'Classic Professional';
+    const savedColor = localStorage.getItem('selectedColor') || '#2c3e50';
+
+    const response = await fetch(`${BACKEND_URL}/api/payment/process`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        packageType: selectedPackage,
+        amount: paymentOptions[selectedPackage].amount,
+        cvData: latestCvData,
+        coverLetterCompany: coverLetterCompany,
+        coverLetterPosition: coverLetterPosition,
+        selectedTemplate: savedTemplate,
+        selectedColor: savedColor
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || 'Failed to create checkout session');
+    }
+
+    if (data.success) {
+      console.log('✅ Checkout session created, saving package & redirecting...');
+
+      const packageData = {
+        cvData: latestCvData,
+        coverLetterCompany,
+        coverLetterPosition,
+        packageType: selectedPackage,
+        selectedTemplate: savedTemplate,
+        selectedColor: savedColor,
+        aiCoverLetter: data.aiCoverLetter || null,
+        timestamp: Date.now(),
+      };
+
+      localStorage.setItem('pendingPackage', JSON.stringify(packageData));
+      window.location.href = data.redirectUrl;
+    }
+  } catch (error) {
+    console.error('❌ Checkout creation failed:', error);
+    setCardError(error.message || 'Failed to initiate payment');
+    setIsProcessing(false);
+  }
+};
+
+
+//   const generateBasicCoverLetterForDownload = (company, position, dataToUse) => {
+//     if (!company || !position) {
+//       console.error('❌ Company and position required for cover letter');
+//       return;
+//     }
+
+//     const currentDate = new Date().toLocaleDateString('en-US', {
+//       year: 'numeric',
+//       month: 'long',
+//       day: 'numeric'
+//     });
+
+//     const basicCoverLetter = `${currentDate}
+
+// Hiring Manager
+// ${company}
+
+// Dear Hiring Manager,
+
+// I am writing to apply for the ${position} position at ${company}. ${dataToUse.professionalSummary || `My experience in ${dataToUse.personalInfo.profession || 'this field'} aligns with your requirements.`}
+
+// ${dataToUse.workExperience.length > 0 ? `As ${dataToUse.workExperience[0].jobTitle || 'a professional'}, I have developed skills in ${dataToUse.skills.slice(0, 3).join(', ') || 'key areas'}.` : ''}
+
+// I am impressed by ${company}'s work and believe I can contribute to your team. Thank you for considering my application.
+
+// Sincerely,
+
+// ${dataToUse.personalInfo.fullName || 'Your Name'}
+// ${dataToUse.personalInfo.email || ''}${dataToUse.personalInfo.phone ? ` | ${dataToUse.personalInfo.phone}` : ''}${dataToUse.personalInfo.linkedin ? ` | LinkedIn: ${dataToUse.personalInfo.linkedin}` : ''}`;
+
+//     downloadCoverLetterPDF(basicCoverLetter, 'basic-cover-letter', dataToUse);
+//   };
+
+  // const downloadCoverLetterPDF = (content, type, dataToUse) => {
+  //   const pdf = new jsPDF();
+  //   const pageWidth = pdf.internal.pageSize.getWidth();
+  //   const margin = 20;
+  //   const maxWidth = pageWidth - (2 * margin);
+    
+  //   pdf.setFontSize(10);
+  //   pdf.setFont('helvetica', 'normal');
+
+  //   let yPosition = 30;
+    
+  //   const lines = content.split('\n');
+    
+  //   lines.forEach((line) => {
+  //     const trimmedLine = line.trim();
+      
+  //     if (!trimmedLine) {
+  //       yPosition += 3;
+  //       return;
+  //     }
+      
+  //     if (trimmedLine.includes('Dear')) {
+  //       yPosition += 8;
+  //       pdf.setFontSize(10);
+  //     } else if (trimmedLine.includes('Sincerely') || trimmedLine.includes('Best regards')) {
+  //       yPosition += 12;
+  //       pdf.setFontSize(10);
+  //     } else if (trimmedLine === (dataToUse.personalInfo.fullName || 'Your Name')) {
+  //       pdf.setFont('helvetica', 'bold');
+  //       pdf.setFontSize(11);
+  //     } else if (trimmedLine.includes('@') || trimmedLine.includes('LinkedIn') || trimmedLine.includes('Phone')) {
+  //       pdf.setFontSize(9);
+  //       pdf.setFont('helvetica', 'normal');
+  //     } else {
+  //       pdf.setFontSize(10);
+  //       pdf.setFont('helvetica', 'normal');
+  //     }
+      
+  //     const textLines = pdf.splitTextToSize(trimmedLine, maxWidth);
+      
+  //     textLines.forEach((textLine) => {
+  //       if (yPosition > 270) {
+  //         pdf.addPage();
+  //         yPosition = 20;
+  //       }
+        
+  //       pdf.text(textLine, margin, yPosition);
+  //       yPosition += 5;
+  //     });
+  //   });
+
+  //   pdf.save(`${dataToUse.personalInfo.fullName || 'cover-letter'}-${type}.pdf`);
+  // };
+
   if (!isOpen) return null;
- 
+
   return (
     <div className="modal-overlay">
-      <div className="payment-modal">
-        <h2>Download CV</h2>
-        <p>To download your CV, please complete the payment of R19.99.</p>
-        <div className="payment-details">
-          <p><strong>Amount:</strong> R19.99 ZAR</p>
-          <p><strong>Payment Method:</strong> Credit/Debit Card</p>
+      <div className="payment-modal" style={{ maxWidth: '500px' }}>
+        <div className="payment-modal-header">
+          <h2>Download Your CV Package</h2>
+          <button onClick={onClose} className="close-btn">×</button>
         </div>
- 
-        <div className="payment-form">
-          <input type="text" placeholder="Card Number" />
-          <div className="card-details">
-            <input type="text" placeholder="MM/YY" />
-            <input type="text" placeholder="CVV" />
+        
+        <div className="selected-package-info">
+          <h3>{paymentOptions[selectedPackage]?.title}</h3>
+          <p>{paymentOptions[selectedPackage]?.description}</p>
+          <div className="package-price">{paymentOptions[selectedPackage]?.price}</div>
+        </div>
+
+        <div className="payment-method">
+          <h4>Secure Payment</h4>
+          
+          {cardError && (
+            <div className="error-message" style={{
+              color: '#dc3545',
+              background: '#f8d7da',
+              padding: '10px',
+              borderRadius: '5px',
+              marginBottom: '15px',
+              border: '1px solid #f5c6cb'
+            }}>
+              {cardError}
+            </div>
+          )}
+
+          <div className="yoco-info">
+            <div className="security-badge">
+              <span>🔒</span>
+              <span>Powered by Yoco - Secure Payment</span>
+            </div>
+                {/* <div className="payment-test-info">
+                  <h5>Test Mode - Use Any Card:</h5>
+                  <strong>Card Number:</strong> Any test number (e.g., 4242 4242 4242 4242)<br/>
+                  <strong>Expiry Date:</strong> Any future date<br/>
+                  <strong>CVC:</strong> Any 3 digits<br/>
+                  <strong>Name:</strong> Any name<br/>
+                  <em>Payments are simulated in development mode</em>
+                </div> */}
           </div>
         </div>
- 
+
         <div className="payment-actions">
-          <button onClick={onClose}>Cancel</button>
-          <button onClick={handlePayment} disabled={isProcessing}>
-            {isProcessing ? 'Processing...' : 'Pay R19.99'}
+          <button 
+            onClick={onClose} 
+            disabled={isProcessing}
+            className="cancel-btn"
+          >
+            Cancel
           </button>
+          <button 
+            onClick={handlePayment} 
+            disabled={isProcessing || !yocoSDK}
+            className="pay-btn"
+            style={{background: '#28a745'}}
+          >
+            {isProcessing ? (
+              <>
+                <span className="spinner"></span>
+                Processing Payment...
+              </>
+            ) : (
+              `Pay ${paymentOptions[selectedPackage]?.price}`
+            )}
+          </button>
+        </div>
+
+        <div className="payment-note">
+          <small>
+            💡 <strong>Note:</strong> Your CV and cover letter will download automatically after payment.
+          </small>
         </div>
       </div>
     </div>
@@ -249,10 +1059,15 @@ const CVForm = React.memo(({
   coverLetterPosition,
   setCoverLetterPosition,
   generateCoverLetter,
-  generateBasicCoverLetter
+  generateBasicCoverLetter,
 }) => {
   return (
     <div className="form-section">
+      {/* Global / general tips at the top */}
+      <div className="tip-block">
+        <strong>Tip:</strong> Before you download or submit your CV, carefully read it from top to bottom to check for spelling, grammar, dates, and any small mistakes. A clean, error-free CV looks more professional.
+      </div>
+
       <div className="form-group">
         <h3>CV Color Theme</h3>
         <div className="color-selector-form">
@@ -277,49 +1092,58 @@ const CVForm = React.memo(({
           </div>
         </div>
       </div>
- 
-{!['Bold Modern', 'Tech Innovator', 'Startup Entrepreneur', 'Minimal Tech'].includes(selectedTemplate) ? (
-  <div className="form-group">
-    <h3>Profile Image (Optional)</h3>
-    <div className="image-upload-options">
-      <div className="upload-option">
-        <label htmlFor="file-upload" className="upload-btn">
-          Upload Image
-        </label>
-        <input
-          id="file-upload"
-          type="file"
-          accept="image/*"
-          onChange={handleImageUpload}
-          ref={fileInputRef}
-          style={{ display: 'none' }}
-        />
-      </div>
-      {profileImage && (
-        <div className="upload-option">
-          <button className="remove-image-btn" onClick={removeProfileImage}>
-            Remove Image
-          </button>
+
+      {!['Bold Modern', 'Tech Innovator', 'Startup Entrepreneur', 'Minimal Tech'].includes(selectedTemplate) ? (
+        <div className="form-group">
+          <h3>Profile Image (Optional)</h3>
+          <div className="tip-block">
+            <strong>Tip:</strong> In many professional settings a profile photo is not required, and sometimes it can be unnecessary. If you’re unsure, it’s usually safe to leave the image off and let your experience and skills speak for you.
+          </div>
+          <div className="image-upload-options">
+            <div className="upload-option">
+              <label htmlFor="file-upload" className="upload-btn">
+                Upload Image
+              </label>
+              <input
+                id="file-upload"
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                ref={fileInputRef}
+                style={{ display: 'none' }}
+              />
+            </div>
+            {profileImage && (
+              <div className="upload-option">
+                <button className="remove-image-btn" onClick={removeProfileImage}>
+                  Remove Image
+                </button>
+              </div>
+            )}
+          </div>
+          {profileImage && (
+            <div className="image-preview">
+              <img src={profileImage} alt="Profile preview" />
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="form-group">
+          <h3>Profile Image</h3>
+          <div className="tip-block">
+            <strong>Tip:</strong> This template does not support profile images. In most professional CVs, a photo is not necessary, so you can safely focus on your content.
+          </div>
+          <div className="no-image-notice">
+            <p>The <strong>{selectedTemplate}</strong> template does not support profile images.</p>
+          </div>
         </div>
       )}
-    </div>
-    {profileImage && (
-      <div className="image-preview">
-        <img src={profileImage} alt="Profile preview" />
-      </div>
-    )}
-  </div>
-) : (
-  <div className="form-group">
-    <h3>Profile Image</h3>
-    <div className="no-image-notice">
-      <p>The <strong>{selectedTemplate}</strong> template does not support profile images.</p>
-    </div>
-  </div>
-)}
- 
+
       <div className="form-group">
         <h3>Personal Information</h3>
+        <div className="tip-block">
+          <strong>Tip:</strong> Use a professional email address, include a working phone number, and make sure links (like LinkedIn) actually open to your profile. Keep this section clean and accurate.
+        </div>
         <input
           type="text"
           placeholder="Full Name"
@@ -357,18 +1181,24 @@ const CVForm = React.memo(({
           onChange={(e) => handleInputChange('personalInfo.profession', 'profession', e.target.value)}
         />
       </div>
- 
+
       <div className="form-group">
         <h3>Professional Summary</h3>
+        <div className="tip-block">
+          <strong>Tips:</strong> Write 2–3 lines like an elevator pitch. Start with a strong phrase (e.g., “Results-driven software developer…”). Tailor it to the role you want and highlight your strongest skills or achievements.
+        </div>
         <textarea
           placeholder="Write a compelling summary of your professional background"
           value={cvData.professionalSummary}
           onChange={(e) => handleInputChange('professionalSummary', '', e.target.value)}
         />
       </div>
- 
+
       <div className="form-group">
         <h3>Work Experience</h3>
+        <div className="tip-block">
+          <strong>Tips:</strong> List your most recent roles first. Under each job, use short sentences or bullet-style descriptions starting with action verbs (e.g., “Led”, “Managed”, “Improved”) and, where possible, include results or numbers (e.g., “increased sales by 20%”). Keep it concise and relevant to the jobs you’re applying for.
+        </div>
         {cvData.workExperience.map((exp, index) => (
           <div key={exp.id} className="experience-item">
             <input
@@ -423,9 +1253,12 @@ const CVForm = React.memo(({
           + Add Experience
         </button>
       </div>
- 
+
       <div className="form-group">
         <h3>Education</h3>
+        <div className="tip-block">
+          <strong>Tips:</strong> Start with your most recent or highest qualification. Include the institution, degree, field of study, and year. If you’re still studying, indicate that. You can add relevant modules, projects, or achievements if they help show why you’re a good fit.
+        </div>
         {cvData.education.map((edu, index) => (
           <div key={edu.id} className="education-item">
             <input
@@ -475,9 +1308,12 @@ const CVForm = React.memo(({
           + Add Education
         </button>
       </div>
- 
+
       <div className="form-group">
         <h3>Skills</h3>
+        <div className="tip-block">
+          <strong>Tips:</strong> Match your skills to the job description. Be specific (e.g., “React & TypeScript”, “Advanced Excel: PivotTables, Macros”). Keep each skill short and clear. Mix technical skills and important soft skills (e.g., communication, problem-solving).
+        </div>
         <div className="skills-input">
           <input
             type="text"
@@ -499,9 +1335,12 @@ const CVForm = React.memo(({
           ))}
         </div>
       </div>
- 
+
       <div className="form-group">
         <h3>Certifications</h3>
+        <div className="tip-block">
+          <strong>Tips:</strong> List certifications, short courses, or awards that are relevant and up-to-date. Include the issuing organization and year. Focus on items that actually support the kind of roles you are applying for.
+        </div>
         <div className="certification-input">
           <input
             type="text"
@@ -534,9 +1373,12 @@ const CVForm = React.memo(({
           ))}
         </div>
       </div>
- 
+
       <div className="form-group">
         <h3>Languages</h3>
+        <div className="tip-block">
+          <strong>Tips:</strong> Only include languages where you can actually communicate at the level you choose. Be honest about your proficiency (Basic, Intermediate, Advanced, Native).
+        </div>
         <div className="language-input">
           <input
             type="text"
@@ -567,9 +1409,12 @@ const CVForm = React.memo(({
           ))}
         </div>
       </div>
- 
+
       <div className="form-group">
         <h3>Interests</h3>
+        <div className="tip-block">
+          <strong>Tips:</strong> Keep this short (2–4 real interests). Choose things that say something positive about you, like discipline, creativity, teamwork, or curiosity (for example, “Marathon running”, “Book club”, “Open-source contributions”). Avoid long or generic lists.
+        </div>
         <div className="interest-input">
           <input
             type="text"
@@ -591,101 +1436,66 @@ const CVForm = React.memo(({
           ))}
         </div>
       </div>
- 
-{/* ADD REFERENCES SECTION HERE */}
-{/* REFERENCES SECTION - FIXED */}
-<div className="form-group">
-  <h3>References</h3>
-  {cvData.references.map((ref, index) => (
-    <div key={ref.id} className="reference-item">
-      <h4>Reference {index + 1}</h4>
-      <input
-        type="text"
-        placeholder="Reference Name"
-        value={ref.name}
-        onChange={(e) => handleInputChange('references', 'name', e.target.value, index)}
-      />
-      <input
-        type="text"
-        placeholder="Position"
-        value={ref.position}
-        onChange={(e) => handleInputChange('references', 'position', e.target.value, index)}
-      />
-      <input
-        type="text"
-        placeholder="Company"
-        value={ref.company}
-        onChange={(e) => handleInputChange('references', 'company', e.target.value, index)}
-      />
-      <input
-        type="email"
-        placeholder="Email"
-        value={ref.email}
-        onChange={(e) => handleInputChange('references', 'email', e.target.value, index)}
-      />
-      <input
-        type="tel"
-        placeholder="Phone"
-        value={ref.phone}
-        onChange={(e) => handleInputChange('references', 'phone', e.target.value, index)}
-      />
-      {cvData.references.length > 1 && (
-        <button 
-          type="button" 
-          className="remove-btn"
-          onClick={() => removeReference(ref.id)}
-        >
-          Remove Reference
-        </button>
-      )}
-    </div>
-  ))}
-  <button type="button" className="add-btn" onClick={addReference}>
-    + Add Reference
-  </button>
-</div>
- 
-      {/* ADD COVER LETTER GENERATION SECTION HERE */}
+
+      {/* REFERENCES SECTION */}
       <div className="form-group">
-        <h3>Cover Letter Generator</h3>
-        <div className="cover-letter-inputs">
-          <input
-            type="text"
-            placeholder="Company Name"
-            value={coverLetterCompany}
-            onChange={(e) => setCoverLetterCompany(e.target.value)}
-          />
-          <input
-            type="text"
-            placeholder="Position Applying For"
-            value={coverLetterPosition}
-            onChange={(e) => setCoverLetterPosition(e.target.value)}
-          />
-          <div className="cover-letter-buttons">
-            <button 
-              type="button" 
-              className="generate-cover-letter-btn"
-              onClick={generateCoverLetter}
-              disabled={!coverLetterCompany || !coverLetterPosition}
-            >
-              Generate with AI
-            </button>
-            <button 
-              type="button" 
-              className="generate-basic-btn"
-              onClick={generateBasicCoverLetter}
-              disabled={!coverLetterCompany || !coverLetterPosition}
-            >
-              Generate Basic
-            </button>
+        <h3>References</h3>
+        <div className="tip-block">
+          <strong>Tips:</strong> Only add people who have agreed to act as your reference, and make sure their contact details are up to date. Choose people who can speak positively about your work or character (e.g., previous managers, supervisors, lecturers). If you prefer, you can also use “References available on request”.
+        </div>
+        {cvData.references.map((ref, index) => (
+          <div key={ref.id} className="reference-item">
+            <h4>Reference {index + 1}</h4>
+            <input
+              type="text"
+              placeholder="Reference Name"
+              value={ref.name}
+              onChange={(e) => handleInputChange('references', 'name', e.target.value, index)}
+            />
+            <input
+              type="text"
+              placeholder="Position"
+              value={ref.position}
+              onChange={(e) => handleInputChange('references', 'position', e.target.value, index)}
+            />
+            <input
+              type="text"
+              placeholder="Company"
+              value={ref.company}
+              onChange={(e) => handleInputChange('references', 'company', e.target.value, index)}
+            />
+            <input
+              type="email"
+              placeholder="Email"
+              value={ref.email}
+              onChange={(e) => handleInputChange('references', 'email', e.target.value, index)}
+            />
+            <input
+              type="tel"
+              placeholder="Phone"
+              value={ref.phone}
+              onChange={(e) => handleInputChange('references', 'phone', e.target.value, index)}
+            />
+            {cvData.references.length > 1 && (
+              <button 
+                type="button" 
+                className="remove-btn"
+                onClick={() => removeReference(ref.id)}
+              >
+                Remove Reference
+              </button>
+            )}
           </div>
-        </div>
-        <div className="cover-letter-info">
-          <p><strong>Note:</strong> AI generation uses secure server-side processing and works best with your CV information. Your data is safe and never stored.</p>
-        </div>
+        ))}
+        <button type="button" className="add-btn" onClick={addReference}>
+          + Add Reference
+        </button>
       </div>
- 
+
       <div className="form-group">
+        <div className="tip-block">
+          <strong>Final Tip:</strong> After filling in every section, take a moment to read your CV as if you were the employer. Check spelling, dates, job titles, and links. Small mistakes can distract from a strong CV.
+        </div>
         <button type="button" className="reset-cv-btn" onClick={resetCV}>
           Reset CV
         </button>
@@ -693,6 +1503,7 @@ const CVForm = React.memo(({
     </div>
   );
 });
+
  
 // ... (Keep all your template components exactly as they were)
 // ClassicProfessionalTemplate, TechInnovatorTemplate, CreativeArtsTemplate, etc.
@@ -2319,87 +3130,82 @@ const LandingPage = ({ onGetStarted }) => {
         <div className="shape shape-2"></div>
       </div>
 
-{/* TWO-COLUMN HERO SECTION WITH VISUAL BALANCE */}
+{/* MATURE, TRUTHFUL HERO SECTION */}
 <section className="hero-vibrant">
   <div className="hero-container">
-    {/* Left Column - Content */}
-    <div className="hero-left-column">
-      <div className="logo-container">
-        <img src="/images/logo.png" alt="CVGrid Logo" className="hero-logo" />
-      </div>
-
-      <div className="hero-text-content">
-        <h1 className="hero-title">
-          Create <span className="gradient-text">Professional CVs</span> 
-          <br />That Get You <span className="highlight-text">Hired</span>
-        </h1>
-        
-        <p className="hero-description">
-          Transform your career story into a professional masterpiece with 
-          <strong> 12+ beautiful templates</strong>, instant PDF downloads, 
-          and AI-powered cover letters.
-        </p>
-
-        <div className="hero-actions">
-          <button className="cta-primary" onClick={onGetStarted}>
-            <span className="cta-icon">🚀</span>
-            Start Building Now
-            <span className="price-tag">R19.99</span>
-          </button>
-          <button className="cta-secondary" onClick={onGetStarted}>
-            View All Templates
-          </button>
-        </div>
-      </div>
+    {/* Logo */}
+    <div className="hero-logo-section">
+      <img src="/images/logo.png" alt="CVGrid Logo" className="hero-logo" />
     </div>
 
-    {/* Right Column - Visual Element */}
-    <div className="hero-right-column">
-      <div className="cv-preview-showcase">
-        <div className="preview-stack">
-          <div className="preview-card preview-card-1">
-            <div className="card-header" style={{background: 'var(--primary-color)'}}></div>
-            <div className="card-content">
-              <div className="line"></div>
-              <div className="line short"></div>
-              <div className="line"></div>
-              <div className="line short"></div>
-              <div className="line"></div>
-            </div>
-          </div>
-          <div className="preview-card preview-card-2">
-            <div className="card-header" style={{background: '#27ae60'}}></div>
-            <div className="card-content">
-              <div className="line"></div>
-              <div className="line short"></div>
-              <div className="line"></div>
-              <div className="line short"></div>
-            </div>
-          </div>
-          <div className="preview-card preview-card-3">
-            <div className="card-header" style={{background: '#9b59b6'}}></div>
-            <div className="card-content">
-              <div className="line"></div>
-              <div className="line short"></div>
-              <div className="line"></div>
-            </div>
-          </div>
+    {/* Main Content */}
+    <div className="hero-content-centered">
+      <h1 className="hero-title">
+        Professional CVs<br />
+        <span className="gradient-text">Made Simple</span>
+      </h1>
+      
+      <p className="hero-description">
+        Create stunning, professional CVs in minutes. No design skills needed.<br />
+        Choose from carefully crafted templates and download instantly as PDF.
+      </p>
+
+      {/* Real Features - No Exaggeration */}
+      <div className="hero-features">
+        <div className="feature-card">
+          <div className="feature-icon">🎨</div>
+          <h3>Professional Templates</h3>
+          <p>Carefully designed templates that follow industry standards and best practices</p>
         </div>
-        <div className="floating-elements">
-          <div className="floating-element element-1">📄</div>
-          <div className="floating-element element-2">🎨</div>
-          <div className="floating-element element-3">🚀</div>
+        
+        <div className="feature-card">
+          <div className="feature-icon">⚡</div>
+          <h3>Instant PDF Export</h3>
+          <p>Download your CV as a print-ready PDF file with perfect formatting</p>
+        </div>
+        
+        {/* <div className="feature-card">
+          <div className="feature-icon">📱</div>
+          <h3>Mobile Friendly</h3>
+          <p>Create and edit your CV from any device, anywhere</p>
+        </div> */}
+      </div>
+
+      {/* CTA Buttons */}
+      <div className="hero-actions">
+        <button className="cta-primary" onClick={onGetStarted}>
+          <span>✨</span>
+          Create Your CV Now
+          <span className="price-tag">R20.00</span>
+        </button>
+        <button className="cta-secondary" onClick={onGetStarted}>
+          Browse Templates
+        </button>
+      </div>
+
+      {/* Trust Indicators - Honest & Real */}
+      <div className="trust-indicators">
+        <div className="trust-item">
+          <span className="trust-icon">🔒</span>
+          No Registration Required
+        </div>
+        <div className="trust-item">
+          <span className="trust-icon">💳</span>
+          Secure Payment
+        </div>
+        <div className="trust-item">
+          <span className="trust-icon">📄</span>
+          Instant Download
         </div>
       </div>
     </div>
   </div>
   
-  {/* Animated Background Elements */}
+  {/* Subtle Background Elements */}
   <div className="floating-shapes">
     <div className="shape shape-1"></div>
     <div className="shape shape-2"></div>
     <div className="shape shape-3"></div>
-    <div className="shape shape-4"></div>
   </div>
 </section>
 
@@ -2566,10 +3372,10 @@ const LandingPage = ({ onGetStarted }) => {
               <strong> No subscriptions, no hidden fees</strong> - just one simple payment.
             </p>
             
-            <div className="pricing-highlight">
+            {/* <div className="pricing-highlight">
               <div className="price-main">R19.99</div>
               <div className="price-description">One-time payment • Lifetime access</div>
-            </div>
+            </div> */}
 
             <div className="cta-features">
               <div className="cta-feature">✓ All 12+ Templates Included</div>
@@ -2602,16 +3408,15 @@ const LandingPage = ({ onGetStarted }) => {
             <div className="footer-links">
               <div className="footer-section">
                 <h4>Support</h4>
-                <a href="mailto:support@cvgrid.com">Email Support</a>
+                <a href="mailto:support@cvgrid.co.za">Email Support</a>
               </div>
               <div className="footer-section">
                 <h4>Company</h4>
-                <a href="#contact">Contact</a>
-              </div>
+                <a href="https://wa.me/27788849286?text=Hello%2C%20I%20found%20you%20through%20your%20website" target="_blank" rel="noopener noreferrer">Contact</a>              </div>
             </div>
           </div>
           <div className="footer-bottom">
-            <p>&copy; 2024 CVGrid. All rights reserved. • support@cvgrid.com</p>
+            <p>&copy; 2025 CVGrid. All rights reserved. • support@cvgrid.co.za</p>
           </div>
         </div>
       </footer>
@@ -2620,6 +3425,7 @@ const LandingPage = ({ onGetStarted }) => {
   );
 };
  
+
 // CVBuilder Component
 const CVBuilder = () => {
   const [cvData, setCvData] = useState({
@@ -2664,18 +3470,14 @@ const CVBuilder = () => {
   const [currentCertification, setCurrentCertification] = useState({ name: '', issuer: '', year: '' });
   const [currentLanguage, setCurrentLanguage] = useState({ name: '', proficiency: '' });
   const [currentInterest, setCurrentInterest] = useState('');
-  // const [currentReference, setCurrentReference] = useState({ 
-  //   name: '', 
-  //   position: '', 
-  //   company: '', 
-  //   email: '', 
-  //   phone: '' 
-  // });
+
   const [profileImage, setProfileImage] = useState(null);
   const [selectedTemplate, setSelectedTemplate] = useState('Classic Professional');
   const [selectedColor, setSelectedColor] = useState('#2c3e50');
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
+  const [selectedPackage, setSelectedPackage] = useState(null);
+
  
   // ADD COVER LETTER STATE VARIABLES
   const [coverLetter, setCoverLetter] = useState('');
@@ -2687,9 +3489,7 @@ const CVBuilder = () => {
   const fileInputRef = useRef(null);
   const formContainerRef = useRef(null);
 
-  
- 
-  // ADD FALLBACK COVER LETTER GENERATION
+
 const generateBasicCoverLetter = useCallback(() => {
   if (!coverLetterCompany || !coverLetterPosition) {
     alert('Please enter both company name and position');
@@ -2733,67 +3533,78 @@ ${cvData.personalInfo.linkedin ? `LinkedIn: ${cvData.personalInfo.linkedin}` : '
   setIsCoverLetterModalOpen(true);
 }, [coverLetterCompany, coverLetterPosition, cvData]);
  
-  // ADD COVER LETTER GENERATION FUNCTION
 const generateCoverLetter = useCallback(async () => {
   if (!coverLetterCompany || !coverLetterPosition) {
     alert('Please enter both company name and position');
     return;
   }
- 
+
   setIsGeneratingCoverLetter(true);
   setIsCoverLetterModalOpen(true);
- 
+
   try {
     console.log('🔄 Starting cover letter generation...');
- 
-    // Use your backend server URL - FIXED ENDPOINT
-    const backendUrl = 'http://localhost:5000';
- 
-    const response = await fetch(`${backendUrl}/api/generate-cover-letter`, {
+
+    const response = await fetch(`${BACKEND_URL}/api/generate-cover-letter`, {
+
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        personalInfo: cvData.personalInfo,
-        professionalSummary: cvData.professionalSummary,
-        workExperience: cvData.workExperience,
-        education: cvData.education,
-        skills: cvData.skills,
+        // send the same structure your server supports
+        cvData: {
+          personalInfo: cvData.personalInfo,
+          professionalSummary: cvData.professionalSummary,
+          workExperience: cvData.workExperience,
+          education: cvData.education,
+          skills: cvData.skills,
+        },
         company: coverLetterCompany,
-        position: coverLetterPosition
-      })
+        position: coverLetterPosition,
+      }),
     });
- 
+
     const data = await response.json();
- 
+    console.log('🔎 /api/generate-cover-letter response:', data);
+
     if (!response.ok) {
       throw new Error(data.error || `Server error: ${response.status}`);
     }
- 
-    if (!data.success) {
-      throw new Error(data.error || 'Failed to generate cover letter');
+
+    // Be generous: if the server gives us AI text, use it,
+    // regardless of a "success" flag.
+    const aiText =
+      (typeof data.coverLetter === 'string' && data.coverLetter.trim()) ||
+      (typeof data.aiCoverLetter === 'string' && data.aiCoverLetter.trim()) ||
+      null;
+
+    if (!aiText) {
+      // Only treat as error if there is truly no text at all
+      if (data.success === false) {
+        throw new Error(data.error || 'Failed to generate cover letter');
+      }
+      throw new Error('No cover letter text returned from server');
     }
- 
+
     console.log('✅ Cover letter generated successfully');
-    setCoverLetter(data.coverLetter);
- 
+    setCoverLetter(aiText.trim());
   } catch (error) {
     console.error('❌ Error generating cover letter:', error);
- 
-    // Fallback to basic cover letter with better error message
-    const errorMsg = error.message.includes('OpenAI API key') 
+
+    const errorMsg = error.message.includes('OpenAI API key')
       ? 'Server configuration error. Using basic template instead.'
       : `AI generation failed: ${error.message}. Using basic template instead.`;
- 
+
     alert(errorMsg);
     generateBasicCoverLetter();
   } finally {
     setIsGeneratingCoverLetter(false);
   }
 }, [coverLetterCompany, coverLetterPosition, cvData, generateBasicCoverLetter]);
- 
-  // ADD COVER LETTER DOWNLOAD FUNCTION
+
+
+
   const handleDownloadCoverLetter = useCallback(() => {
     if (!coverLetter.trim()) {
       alert('No cover letter to download');
@@ -2853,6 +3664,8 @@ const generateCoverLetter = useCallback(async () => {
     localStorage.setItem('selectedTemplate', selectedTemplate);
     localStorage.setItem('selectedColor', selectedColor);
   }, [cvData, profileImage, selectedTemplate, selectedColor]);
+
+  // Add this to your CVBuilder component or in a useEffect
  
 const handleInputChange = useCallback((section, field, value, index = null) => {
   setCvData(prevCvData => {
@@ -2875,6 +3688,7 @@ const handleInputChange = useCallback((section, field, value, index = null) => {
     } else {
       return { ...prevCvData, [section]: value };
     }
+
   });
 }, []);
  
@@ -3094,19 +3908,19 @@ const removeReference = useCallback((id) => {
     }
   }, []);
  
-  const handleTemplateChange = (template) => {
-    setSelectedTemplate(template);
- 
-    // Auto-scroll to form on smaller screens
-    if (window.innerWidth < 992 && formContainerRef.current) {
-      setTimeout(() => {
-        formContainerRef.current.scrollIntoView({ 
-          behavior: 'smooth',
-          block: 'start'
-        });
-      }, 300);
-    }
-  };
+const handleTemplateChange = (template) => {
+  setSelectedTemplate(template);
+
+  // Auto-scroll to form on smaller screens
+  if (window.innerWidth < 992 && formContainerRef.current) {
+    setTimeout(() => {
+      formContainerRef.current.scrollIntoView({ 
+        behavior: 'smooth',
+        block: 'start'
+      });
+    }, 300);
+  }
+};
  
   const handleColorChange = (color) => {
     setSelectedColor(color);
@@ -3115,83 +3929,295 @@ const removeReference = useCallback((id) => {
   const handlePreviewCV = () => {
     setIsPreviewOpen(true);
   };
- 
-  const handleDownloadCV = () => {
-    setIsPaymentOpen(true);
-  };
- 
-const handlePaymentSuccess = () => {
-  const cvElement = document.getElementById('cv-template');
-  
-  // Add PDF-specific styling
-  cvElement.classList.add('pdf-export');
 
-  // Set A4 dimensions for capture
-  const a4Width = 210; // mm
-  // const a4Height = 297; // mm
+// const downloadCV = (dataToUse = cvData, retryCount = 0) => {
+//   console.log('🔄 Starting CV download...' + (retryCount > 0 ? ` (Retry ${retryCount})` : ''));
+//   const cvElement = document.getElementById('cv-template');
+//   if (!cvElement) {
+//     console.error('❌ CV template element not found');
+//     return;
+//   }
   
-  html2canvas(cvElement, {
-    scale: 3, // Higher scale for better quality
-    useCORS: true,
-    logging: false,
-    backgroundColor: '#ffffff',
-    width: cvElement.scrollWidth,
-    height: cvElement.scrollHeight,
-    windowWidth: cvElement.scrollWidth,
-    windowHeight: cvElement.scrollHeight,
-    onclone: function(clonedDoc) {
-      const clonedElement = clonedDoc.getElementById('cv-template');
-      if (clonedElement) {
-        // Apply PDF-optimized styles
-        clonedElement.style.width = a4Width + 'mm';
-        clonedElement.style.padding = '10mm';
-        clonedElement.style.margin = '0';
-        clonedElement.style.boxSizing = 'border-box';
-        
-        // Reduce font sizes for PDF
-        const allElements = clonedElement.querySelectorAll('*');
-        allElements.forEach(el => {
-          const style = window.getComputedStyle(el);
-          const fontSize = parseFloat(style.fontSize);
-          if (fontSize > 12) {
-            el.style.fontSize = Math.max(fontSize * 0.85, 10) + 'px';
-          }
-        });
-      }
+//   // Store original styles to restore later
+//   const originalTransform = cvElement.style.transform;
+//   const originalWidth = cvElement.style.width;
+//   const originalMargin = cvElement.style.margin;
+  
+//   // Apply PDF export styles
+//   cvElement.style.transform = 'none';
+//   cvElement.style.width = '210mm';
+//   cvElement.style.margin = '0 auto';
+//   cvElement.style.boxShadow = 'none';
+//   cvElement.style.border = '1px solid #ccc';
+
+//   const captureAndDownload = () => {
+//     html2canvas(cvElement, {
+//       scale: 2,
+//       useCORS: true,
+//       logging: false,
+//       backgroundColor: '#ffffff',
+//       width: cvElement.scrollWidth,
+//       height: cvElement.scrollHeight,
+//       onclone: (clonedDoc) => {
+//         // Ensure all images are loaded in the clone
+//         const images = clonedDoc.querySelectorAll('img');
+//         images.forEach(img => {
+//           if (!img.complete) {
+//             img.onload = () => console.log('Image loaded in clone');
+//           }
+//         });
+//       }
+//     }).then(canvas => {
+//       // Restore original styles
+//       cvElement.style.transform = originalTransform;
+//       cvElement.style.width = originalWidth;
+//       cvElement.style.margin = originalMargin;
+//       cvElement.style.boxShadow = '';
+//       cvElement.style.border = '';
+
+//       const imgData = canvas.toDataURL('image/png');
+//       const pdf = new jsPDF('p', 'mm', 'a4');
+//       const pdfWidth = pdf.internal.pageSize.getWidth();
+//       const pdfHeight = pdf.internal.pageSize.getHeight();
+      
+//       const imgProps = pdf.getImageProperties(imgData);
+//       const ratio = imgProps.width / imgProps.height;
+//       const pdfImageHeight = pdfWidth / ratio;
+      
+//       pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfImageHeight);
+//       pdf.save(`${dataToUse.personalInfo.fullName || 'cv'}.pdf`);
+//       console.log('✅ CV downloaded successfully');
+      
+//     }).catch(error => {
+//       // Restore original styles on error
+//       cvElement.style.transform = originalTransform;
+//       cvElement.style.width = originalWidth;
+//       cvElement.style.margin = originalMargin;
+//       cvElement.style.boxShadow = '';
+//       cvElement.style.border = '';
+
+//       console.error('❌ CV download failed:', error);
+      
+//       // Retry up to 2 times
+//       if (retryCount < 2) {
+//         console.log(`🔄 Retrying CV download (${retryCount + 1}/2)...`);
+//         setTimeout(() => downloadCV(dataToUse, retryCount + 1), 1000);
+//       } else {
+//         alert('CV download failed after multiple attempts. Please try again.');
+//       }
+//     });
+//   };
+
+//   // Small delay to ensure styles are applied
+//   setTimeout(captureAndDownload, 500);
+// };
+
+  const generateBasicCoverLetterForDownload = (company, position, dataToUse = cvData) => {
+    if (!company || !position) {
+      console.error('❌ Company and position required for cover letter');
+      return;
     }
-  }).then(canvas => {
-    cvElement.classList.remove('pdf-export');
-    
-    const imgData = canvas.toDataURL('image/png', 1.0);
-    const pdf = new jsPDF('p', 'mm', 'a4');
-    const pdfWidth = pdf.internal.pageSize.getWidth();
-    const pdfHeight = pdf.internal.pageSize.getHeight();
 
-    // Calculate dimensions to fit A4 perfectly
-    const imgWidth = canvas.width;
-    const imgHeight = canvas.height;
-    const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight) * 0.95; // 95% to ensure fit
-    
-    // Center the image on the page with minimal margins
-    const imgX = (pdfWidth - imgWidth * ratio) / 2;
-    const imgY = (pdfHeight - imgHeight * ratio) / 2;
+    const currentDate = new Date().toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
 
-    pdf.addImage(imgData, 'PNG', imgX, imgY, imgWidth * ratio, imgHeight * ratio);
-    pdf.save(`${cvData.personalInfo.fullName || 'cv'}.pdf`);
-  }).catch(error => {
-    console.error('Error generating PDF:', error);
-    cvElement.classList.remove('pdf-export');
-    alert('Error generating PDF. Please try again.');
+    const basicCoverLetter = `
+${currentDate}
+
+${dataToUse.personalInfo.fullName || 'Your Name'}
+${dataToUse.personalInfo.email || ''}${dataToUse.personalInfo.phone ? ` | ${dataToUse.personalInfo.phone}` : ''}
+${dataToUse.personalInfo.linkedin ? `LinkedIn: ${dataToUse.personalInfo.linkedin}` : ''}
+
+Hiring Manager
+${company}
+
+Dear Hiring Manager,
+
+I am writing to express my genuine interest in the ${position} position at ${company}. 
+
+${dataToUse.professionalSummary || `With my experience in ${dataToUse.personalInfo.profession || 'this field'}, I believe I would be a valuable addition to your team.`}
+
+Thank you for considering my application. I look forward to the possibility of discussing this opportunity further.
+
+Best regards,
+
+${dataToUse.personalInfo.fullName || 'Your Name'}
+    `.trim();
+
+    downloadCoverLetterPDF(basicCoverLetter, 'basic-cover-letter', dataToUse);
+  };
+
+  const downloadCoverLetterPDF = (content, type, dataToUse = cvData) => {
+    const pdf = new jsPDF();
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const margin = 20;
+    const maxWidth = pageWidth - 2 * margin;
+
+    const lines = pdf.splitTextToSize(content, maxWidth);
+    
+    let yPosition = 20;
+    
+    lines.forEach((line) => {
+      if (yPosition > 270) {
+        pdf.addPage();
+        yPosition = 20;
+      }
+      pdf.text(line, margin, yPosition);
+      yPosition += 10;
+    });
+
+    pdf.save(`${dataToUse.personalInfo.fullName || 'cover-letter'}cover-letter.pdf`);
+  };
+
+const handleDownloadWithBasicCoverLetter = () => {
+  if (!coverLetterCompany || !coverLetterPosition) {
+    alert('Please enter both company name and position');
+    return;
+  }
+  setSelectedPackage('basic');
+  setIsPaymentOpen(true);
+};
+
+const handleDownloadWithAICoverLetter = () => {
+  if (!coverLetterCompany || !coverLetterPosition) {
+    alert('Please enter both company name and position');
+    return;
+  }
+  setSelectedPackage('ai');
+  setIsPaymentOpen(true);
+};
+
+// Downloads CV + cover letter after payment
+const triggerFileDownloads = (packageData) => {
+  if (!packageData || !packageData.cvData) {
+    console.error('❌ No package data for downloads');
+    return;
+  }
+
+  console.log('🎯 Starting downloads with packageData:', packageData);
+
+  // --- CV DOWNLOAD ---
+  const downloadCV = () => {
+    return new Promise((resolve) => {
+      console.log('🔄 Starting CV download…');
+      const cvElement = document.getElementById('cv-template');
+
+      if (!cvElement) {
+        console.error('❌ CV template element not found');
+        resolve(false);
+        return;
+      }
+
+      const originalTransform = cvElement.style.transform;
+      const originalWidth = cvElement.style.width;
+      const originalMargin = cvElement.style.margin;
+      const originalBoxShadow = cvElement.style.boxShadow;
+      const originalBorder = cvElement.style.border;
+
+      cvElement.style.transform = 'none';
+      cvElement.style.width = '210mm';
+      cvElement.style.margin = '0 auto';
+      cvElement.style.boxShadow = 'none';
+      cvElement.style.border = '1px solid #ccc';
+
+      setTimeout(() => {
+        html2canvas(cvElement, {
+          scale: 2,
+          useCORS: true,
+          logging: false,
+          backgroundColor: '#ffffff',
+        })
+          .then((canvas) => {
+            cvElement.style.transform = originalTransform;
+            cvElement.style.width = originalWidth;
+            cvElement.style.margin = originalMargin;
+            cvElement.style.boxShadow = originalBoxShadow;
+            cvElement.style.border = originalBorder;
+
+            const imgData = canvas.toDataURL('image/png');
+            const pdf = new jsPDF('p', 'mm', 'a4');
+            const pdfWidth = pdf.internal.pageSize.getWidth();
+
+            const imgProps = pdf.getImageProperties(imgData);
+            const ratio = imgProps.width / imgProps.height;
+            const pdfImageHeight = pdfWidth / ratio;
+
+            pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfImageHeight);
+            pdf.save(`${packageData.cvData.personalInfo.fullName || 'cv'}.pdf`);
+            console.log('✅ CV downloaded');
+            resolve(true);
+          })
+          .catch((error) => {
+            cvElement.style.transform = originalTransform;
+            cvElement.style.width = originalWidth;
+            cvElement.style.margin = originalMargin;
+            cvElement.style.boxShadow = originalBoxShadow;
+            cvElement.style.border = originalBorder;
+
+            console.error('❌ CV download failed:', error);
+            resolve(false);
+          });
+      }, 500);
+    });
+  };
+
+  // --- COVER LETTER DOWNLOAD ---
+  const downloadCoverLetter = () => {
+    setTimeout(() => {
+      if (packageData.packageType === 'basic') {
+        // Basic package: generated cover letter
+        generateBasicCoverLetterForDownload(
+          packageData.coverLetterCompany,
+          packageData.coverLetterPosition,
+          packageData.cvData
+        );
+      } else {
+        // AI package: use AI letter if present, else basic
+        if (packageData.aiCoverLetter) {
+          downloadCoverLetterPDF(
+            packageData.aiCoverLetter,
+            'ai-cover-letter',
+            packageData.cvData
+          );
+        } else {
+          generateBasicCoverLetterForDownload(
+            packageData.coverLetterCompany,
+            packageData.coverLetterPosition,
+            packageData.cvData
+          );
+        }
+      }
+      console.log('✅ Cover letter downloaded');
+    }, 2000);
+  };
+
+  // Run them in order
+  downloadCV().then((cvSuccess) => {
+    if (cvSuccess) {
+      downloadCoverLetter();
+    } else {
+      // If CV fails, still try cover letter
+      setTimeout(downloadCoverLetter, 1000);
+    }
   });
 };
+
+
  
-const renderTemplate = () => {
+const renderTemplate = (customData = null) => {
   const noImageTemplates = ['Bold Modern', 'Tech Innovator', 'Startup Entrepreneur', 'Minimal Tech'];
- 
+  
+  // Use custom data if provided (from payment), otherwise use current state
+  const dataToUse = customData || cvData;
+  const profileImageToUse = customData ? null : profileImage; // Don't use profile image for payment downloads
+
   const templateProps = noImageTemplates.includes(selectedTemplate) 
-    ? { cvData, selectedColor } 
-    : { cvData, profileImage, selectedColor };
- 
+    ? { cvData: dataToUse, selectedColor } 
+    : { cvData: dataToUse, profileImage: profileImageToUse, selectedColor };
+
   switch (selectedTemplate) {
     case 'Classic Professional':
       return <ClassicProfessionalTemplate {...templateProps} />;
@@ -3221,6 +4247,7 @@ const renderTemplate = () => {
       return <ClassicProfessionalTemplate {...templateProps} />;
   }
 };
+
  
   return (
     <div className="app">
@@ -3241,7 +4268,7 @@ const renderTemplate = () => {
             currentCertification={currentCertification}
             currentLanguage={currentLanguage}
             currentInterest={currentInterest}
-            // currentReference={currentReference}
+            // ... keep all your existing props exactly as they were
             handleInputChange={handleInputChange}
             addExperience={addExperience}
             removeExperience={removeExperience}
@@ -3259,7 +4286,6 @@ const renderTemplate = () => {
             setCurrentCertification={setCurrentCertification}
             setCurrentLanguage={setCurrentLanguage}
             setCurrentInterest={setCurrentInterest}
-            // setCurrentReference={setCurrentReference}
             profileImage={profileImage}
             handleImageUpload={handleImageUpload}
             removeProfileImage={removeProfileImage}
@@ -3268,10 +4294,8 @@ const renderTemplate = () => {
             selectedColor={selectedColor}
             onColorChange={handleColorChange}
             selectedTemplate={selectedTemplate}
-            // Add these new props for references
             addReference={addReference}
             removeReference={removeReference}
-            // ADD COVER LETTER PROPS
             coverLetterCompany={coverLetterCompany}
             setCoverLetterCompany={setCoverLetterCompany}
             coverLetterPosition={coverLetterPosition}
@@ -3279,6 +4303,46 @@ const renderTemplate = () => {
             generateCoverLetter={generateCoverLetter}
             generateBasicCoverLetter={generateBasicCoverLetter}
           />
+
+          <div className="cover-letter-section mobile-only">
+            <div className="form-group">
+              <h3>Cover Letter Options</h3>
+              <div className="cover-letter-inputs">
+                <input
+                  type="text"
+                  placeholder="Company Name"
+                  value={coverLetterCompany}
+                  onChange={(e) => setCoverLetterCompany(e.target.value)}
+                />
+                <input
+                  type="text"
+                  placeholder="Position Applying For"
+                  value={coverLetterPosition}
+                  onChange={(e) => setCoverLetterPosition(e.target.value)}
+                />
+              </div>
+            </div>
+          </div>
+
+            <div className="preview-actions-bottom mobile-only">
+              <button className="preview-btn" onClick={handlePreviewCV}>
+                Preview CV
+              </button>
+              <button 
+                className="package-btn basic-package" 
+                onClick={handleDownloadWithBasicCoverLetter}
+                disabled={!coverLetterCompany || !coverLetterPosition}
+              >
+                Get CV + Basic Cover Letter - R20.00
+              </button>
+              <button 
+                className="package-btn ai-package" 
+                onClick={handleDownloadWithAICoverLetter}
+                disabled={!coverLetterCompany || !coverLetterPosition}
+              >
+                Get CV + AI Cover Letter - R26.00
+              </button>
+            </div>
         </div>
  
         <div className="preview-container">
@@ -3304,11 +4368,15 @@ const renderTemplate = () => {
             </div>
  
             <div className="preview-actions-bottom">
-              <button className="preview-btn" onClick={handlePreviewCV}>
-                Preview CV
+              {/* NEW - REPLACE WITH THESE */}
+                  <button className="preview-btn" onClick={handlePreviewCV}>
+      Preview CV
+    </button>
+              <button className="package-btn basic-package" onClick={handleDownloadWithBasicCoverLetter}>
+                Get CV + Basic Cover Letter - R20.00
               </button>
-              <button className="download-btn" onClick={handleDownloadCV}>
-                Download CV (R19.99)
+              <button className="package-btn ai-package" onClick={handleDownloadWithAICoverLetter}>
+                Get CV + AI Cover Letter - R26.00
               </button>
             </div>
           </div>
@@ -3319,10 +4387,13 @@ const renderTemplate = () => {
         {renderTemplate()}
       </PreviewModal>
  
-      <PaymentModal 
+      <DirectPaymentModal 
         isOpen={isPaymentOpen} 
         onClose={() => setIsPaymentOpen(false)}
-        onPaymentSuccess={handlePaymentSuccess}
+        selectedPackage={selectedPackage}
+        cvData={cvData}
+        coverLetterCompany={coverLetterCompany}
+        coverLetterPosition={coverLetterPosition}
       />
  
       {/* ADD COVER LETTER MODAL */}
@@ -3337,17 +4408,84 @@ const renderTemplate = () => {
     </div>
   );
 };
- 
-// ADD THE MISSING APP COMPONENT
+
 const App = () => {
   const [showBuilder, setShowBuilder] = useState(false);
- 
+
+useEffect(() => {
+  const checkUrlAndState = () => {
+    const hash = window.location.hash || '';
+
+    const isBuilderHash =
+      hash === '#builder' ||
+      hash.startsWith('#builder?') ||
+      hash.startsWith('#payment_');
+
+    setShowBuilder(isBuilderHash);
+
+    // ✅ Coming back from Yoco with payment success
+    if (hash.includes('payment=success')) {
+      console.log('✅ Payment success detected from URL');
+
+      const pendingPackageRaw = localStorage.getItem('pendingPackage');
+
+      if (pendingPackageRaw) {
+        try {
+          const packageData = JSON.parse(pendingPackageRaw);
+          
+          // Force update localStorage with payment data to ensure CVBuilder uses it
+          localStorage.setItem('cvData', JSON.stringify(packageData.cvData));
+          
+          // Wait longer for everything to load
+          setTimeout(() => {
+            triggerFileDownloads(packageData);
+          }, 3000); // Increased delay
+
+          alert('Payment successful! Your CV and cover letter will start downloading.');
+        } catch (e) {
+          console.error('❌ Could not parse pendingPackage:', e);
+          localStorage.removeItem('pendingPackage');
+        }
+      } else {
+        alert('Payment successful, but no files were queued. Please rebuild your CV.');
+      }
+
+      window.location.hash = '#builder';
+    }
+
+    // ❌ Cancel / failed
+    if (hash.includes('payment=cancel') || hash.includes('payment=failed')) {
+      alert('Payment was cancelled or failed. You have not been charged.');
+      window.location.hash = '#builder';
+    }
+  };
+
+  checkUrlAndState();
+
+  window.addEventListener('hashchange', checkUrlAndState);
+  window.addEventListener('load', checkUrlAndState);
+
+  return () => {
+    window.removeEventListener('hashchange', checkUrlAndState);
+    window.removeEventListener('load', checkUrlAndState);
+  };
+}, []);
+
+
+
+  // Normal routing: either show builder or landing page
   if (showBuilder) {
     return <CVBuilder />;
   }
- 
-  return <LandingPage onGetStarted={() => setShowBuilder(true)} />;
+
+  return (
+    <LandingPage
+      onGetStarted={() => {
+        setShowBuilder(true);
+        window.location.hash = '#builder';
+      }}
+    />
+  );
 };
- 
+
 export default App;
- 

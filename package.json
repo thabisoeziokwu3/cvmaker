@@ -1,6 +1,7 @@
 {
   "name": "cv-build",
   "version": "0.1.0",
+  "homepage": ".",
   "private": true,
   "dependencies": {
     "@emotion/react": "^11.14.0",
@@ -11,14 +12,17 @@
     "@testing-library/user-event": "^13.5.0",
     "axios": "^1.12.2",
     "cors": "^2.8.5",
+    "crypto-js": "^4.2.0",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
     "html2canvas": "^1.4.1",
     "jspdf": "^3.0.3",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
+    "react-router-dom": "^7.9.5",
     "react-scripts": "5.0.1",
-    "web-vitals": "^2.1.4"
+    "web-vitals": "^2.1.4",
+    "yoco": "^1.6.2"
   },
   "scripts": {
     "start": "react-scripts start",
