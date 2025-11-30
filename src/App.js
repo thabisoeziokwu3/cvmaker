@@ -212,7 +212,7 @@ const downloadCVAfterPayment = (packageData) => {
     
     const tempRoot = document.createElement('div');
     tempRoot.id = 'temp-cv-template';
-    tempRoot.className = 'smart-auto-size'; // Apply base smart sizing
+    tempRoot.className = 'smart-auto-size'; 
     tempContainer.appendChild(tempRoot);
     document.body.appendChild(tempContainer);
 
@@ -393,12 +393,12 @@ const downloadCVAfterPayment = (packageData) => {
             document.body.removeChild(tempContainer);
             resolve(false);
           });
-      }, 100); // Small delay for CSS to apply
+      }, 100); 
     }, 2000);
   });
 };
 
-// 2) Build a basic cover letter string (used when no AI letter is returned)
+
 const buildBasicCoverLetterText = (company, position, dataToUse) => {
   if (!company || !position) {
     console.error('❌ Company and position required for cover letter');
@@ -774,93 +774,6 @@ const handlePayment = async () => {
   }
 };
 
-
-//   const generateBasicCoverLetterForDownload = (company, position, dataToUse) => {
-//     if (!company || !position) {
-//       console.error('❌ Company and position required for cover letter');
-//       return;
-//     }
-
-//     const currentDate = new Date().toLocaleDateString('en-US', {
-//       year: 'numeric',
-//       month: 'long',
-//       day: 'numeric'
-//     });
-
-//     const basicCoverLetter = `${currentDate}
-
-// Hiring Manager
-// ${company}
-
-// Dear Hiring Manager,
-
-// I am writing to apply for the ${position} position at ${company}. ${dataToUse.professionalSummary || `My experience in ${dataToUse.personalInfo.profession || 'this field'} aligns with your requirements.`}
-
-// ${dataToUse.workExperience.length > 0 ? `As ${dataToUse.workExperience[0].jobTitle || 'a professional'}, I have developed skills in ${dataToUse.skills.slice(0, 3).join(', ') || 'key areas'}.` : ''}
-
-// I am impressed by ${company}'s work and believe I can contribute to your team. Thank you for considering my application.
-
-// Sincerely,
-
-// ${dataToUse.personalInfo.fullName || 'Your Name'}
-// ${dataToUse.personalInfo.email || ''}${dataToUse.personalInfo.phone ? ` | ${dataToUse.personalInfo.phone}` : ''}${dataToUse.personalInfo.linkedin ? ` | LinkedIn: ${dataToUse.personalInfo.linkedin}` : ''}`;
-
-//     downloadCoverLetterPDF(basicCoverLetter, 'basic-cover-letter', dataToUse);
-//   };
-
-  // const downloadCoverLetterPDF = (content, type, dataToUse) => {
-  //   const pdf = new jsPDF();
-  //   const pageWidth = pdf.internal.pageSize.getWidth();
-  //   const margin = 20;
-  //   const maxWidth = pageWidth - (2 * margin);
-    
-  //   pdf.setFontSize(10);
-  //   pdf.setFont('helvetica', 'normal');
-
-  //   let yPosition = 30;
-    
-  //   const lines = content.split('\n');
-    
-  //   lines.forEach((line) => {
-  //     const trimmedLine = line.trim();
-      
-  //     if (!trimmedLine) {
-  //       yPosition += 3;
-  //       return;
-  //     }
-      
-  //     if (trimmedLine.includes('Dear')) {
-  //       yPosition += 8;
-  //       pdf.setFontSize(10);
-  //     } else if (trimmedLine.includes('Sincerely') || trimmedLine.includes('Best regards')) {
-  //       yPosition += 12;
-  //       pdf.setFontSize(10);
-  //     } else if (trimmedLine === (dataToUse.personalInfo.fullName || 'Your Name')) {
-  //       pdf.setFont('helvetica', 'bold');
-  //       pdf.setFontSize(11);
-  //     } else if (trimmedLine.includes('@') || trimmedLine.includes('LinkedIn') || trimmedLine.includes('Phone')) {
-  //       pdf.setFontSize(9);
-  //       pdf.setFont('helvetica', 'normal');
-  //     } else {
-  //       pdf.setFontSize(10);
-  //       pdf.setFont('helvetica', 'normal');
-  //     }
-      
-  //     const textLines = pdf.splitTextToSize(trimmedLine, maxWidth);
-      
-  //     textLines.forEach((textLine) => {
-  //       if (yPosition > 270) {
-  //         pdf.addPage();
-  //         yPosition = 20;
-  //       }
-        
-  //       pdf.text(textLine, margin, yPosition);
-  //       yPosition += 5;
-  //     });
-  //   });
-
-  //   pdf.save(`${dataToUse.personalInfo.fullName || 'cover-letter'}-${type}.pdf`);
-  // };
 
   if (!isOpen) return null;
 
@@ -1504,10 +1417,7 @@ const CVForm = React.memo(({
   );
 });
 
- 
-// ... (Keep all your template components exactly as they were)
-// ClassicProfessionalTemplate, TechInnovatorTemplate, CreativeArtsTemplate, etc.
-// These remain unchanged from your original code
+
  
 const ClassicProfessionalTemplate = ({ cvData, profileImage, selectedColor }) => {
   return (
@@ -1652,9 +1562,7 @@ const ClassicProfessionalTemplate = ({ cvData, profileImage, selectedColor }) =>
   );
 };
  
-// ... (Keep all existing templates as they are, just add selectedColor prop and style attribute)
- 
-// New Template: Tech Innovator
+
 const TechInnovatorTemplate = ({ cvData, selectedColor }) => {
   return (
     <div className="cv-template tech-innovator" style={{ '--primary-color': selectedColor }}>
@@ -3953,9 +3861,8 @@ const handleDownloadWithAICoverLetter = () => {
 const renderTemplate = (customData = null) => {
   const noImageTemplates = ['Bold Modern', 'Tech Innovator', 'Startup Entrepreneur', 'Minimal Tech'];
   
-  // Use custom data if provided (from payment), otherwise use current state
   const dataToUse = customData || cvData;
-  const profileImageToUse = customData ? null : profileImage; // Don't use profile image for payment downloads
+  const profileImageToUse = customData ? null : profileImage; 
 
   const templateProps = noImageTemplates.includes(selectedTemplate) 
     ? { cvData: dataToUse, selectedColor } 
