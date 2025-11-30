@@ -199,8 +199,8 @@ const yocoCheckoutHandler = async (req, res) => {
       {
         amount, // cents
         currency: 'ZAR',
-        successUrl: 'http://localhost:3000/#builder?payment=success',
-        cancelUrl: 'http://localhost:3000/#builder?payment=cancel',
+        successUrl: 'https://cvgrid.netlify.app/#builder?payment=success',
+        cancelUrl: 'https://cvgrid.netlify.app/#builder?payment=cancel',
         metadata: {
           packageType: packageType || null,
           coverLetterCompany: coverLetterCompany || null,
