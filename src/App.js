@@ -262,141 +262,124 @@ const downloadCVAfterPayment = (packageData) => {
     }
 
     const noImageTemplates = ['Bold Modern', 'Tech Innovator', 'Startup Entrepreneur', 'Minimal Tech'];
-
     const templateProps = noImageTemplates.includes(packageData.selectedTemplate || 'Classic Professional') 
       ? { 
-          cvData: packageData.cvData,
+          cvData: packageData.cvData, 
           selectedColor: packageData.selectedColor || '#2c3e50'
         } 
       : { 
-          cvData: packageData.cvData,
-          profileImage: packageData.profileImage || null,   // ✅ use the saved image
+          cvData: packageData.cvData, 
+          profileImage: packageData.profileImage || packageData.cvData?.profileImage || null,
           selectedColor: packageData.selectedColor || '#2c3e50'
-        };
 
+        };
 
     root.render(
       React.createElement(TemplateComponent, templateProps)
     );
 
-    // Wait for render and apply smart sizing
-    setTimeout(() => {
-      const cvElement = document.getElementById('temp-cv-template');
-      if (!cvElement) {
-        console.error('❌ Temporary CV template element not found');
-        document.body.removeChild(tempContainer);
-        resolve(false);
-        return;
+const waitForImagesAndCapture = (retries = 5) => {
+  const cvElement = document.getElementById('temp-cv-template');
+  if (!cvElement) {
+    console.error('❌ Temporary CV template element not found');
+    document.body.removeChild(tempContainer);
+    resolve(false);
+    return;
+  }
+
+  const images = cvElement.getElementsByTagName('img');
+  let allLoaded = true;
+
+  for (let i = 0; i < images.length; i++) {
+    if (!images[i].complete) {
+      allLoaded = false;
+      break;
+    }
+  }
+
+  if (!allLoaded && retries > 0) {
+    console.log('⏳ Waiting for profile image(s) to load before capture...');
+    setTimeout(() => waitForImagesAndCapture(retries - 1), 400);
+    return;
+  }
+
+  // Smart auto-sizing function (unchanged)
+  const applySmartAutoSizing = (element) => {
+    const A4_HEIGHT_MM = 297;
+    const A4_HEIGHT_PX = A4_HEIGHT_MM * 3.78;
+
+    const contentHeight = element.scrollHeight;
+    const maxHeight = A4_HEIGHT_PX;
+
+    console.log(`📏 Content height: ${contentHeight}px, Max height: ${maxHeight}px`);
+
+    if (contentHeight <= maxHeight) {
+      console.log('✅ Content fits perfectly with base sizing');
+      return 'perfect-fit';
+    }
+
+    const overflowRatio = contentHeight / maxHeight;
+    console.log(`📊 Overflow ratio: ${overflowRatio.toFixed(2)}`);
+
+    element.classList.remove('smart-compact-mode', 'smart-ultra-compact');
+
+    if (overflowRatio > 1.4) {
+      element.classList.add('smart-ultra-compact');
+      console.log('⚠️ Severe overflow – ultra compact mode applied');
+      return 'ultra-compact';
+    } else {
+      element.classList.add('smart-compact-mode');
+      console.log('ℹ️ Mild overflow – compact mode applied');
+      return 'compact';
+    }
+  };
+
+  const sizingMode = applySmartAutoSizing(cvElement);
+  console.log('📄 Final CV Element ready for PDF with smart sizing:', sizingMode);
+
+  html2canvas(cvElement, {
+    scale: 2,
+    useCORS: true,
+    logging: true,
+    backgroundColor: '#ffffff',
+    width: cvElement.scrollWidth,
+    height: cvElement.scrollHeight,
+  })
+    .then((canvas) => {
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+
+      const imgProps = pdf.getImageProperties(imgData);
+      const ratio = imgProps.width / imgProps.height;
+      let pdfImageHeight = pdfWidth / ratio;
+
+      if (pdfImageHeight > pdfHeight) {
+        pdfImageHeight = pdfHeight;
       }
 
-      // Smart auto-sizing function
-      const applySmartAutoSizing = (element) => {
-        const A4_HEIGHT_MM = 297;
-        const A4_HEIGHT_PX = A4_HEIGHT_MM * 3.78;
-        
-        const contentHeight = element.scrollHeight;
-        const maxHeight = A4_HEIGHT_PX;
-        
-        console.log(`📏 Content height: ${contentHeight}px, Max height: ${maxHeight}px`);
-        
-        if (contentHeight <= maxHeight) {
-          console.log('✅ Content fits perfectly with base sizing');
-          return 'perfect-fit';
-        }
-        
-        const overflowRatio = contentHeight / maxHeight;
-        console.log(`📊 Overflow ratio: ${overflowRatio.toFixed(2)}`);
-        
-        // Remove previous sizing classes
-        element.classList.remove('smart-compact-mode', 'smart-ultra-compact');
-        
-        if (overflowRatio > 1.4) {
-          // Severe overflow - apply ultra compact
-          element.classList.add('smart-ultra-compact');
-          console.log('🔻 Severe overflow, applying ultra compact mode');
-          return 'ultra-compact';
-        } else if (overflowRatio > 1.2) {
-          // Moderate overflow - apply compact mode
-          element.classList.add('smart-compact-mode');
-          console.log('🔻 Moderate overflow, applying compact mode');
-          return 'compact';
-        } else {
-          // Mild overflow - keep base smart sizing
-          console.log('🔻 Mild overflow, keeping base smart sizing');
-          return 'base';
-        }
-      };
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfImageHeight);
+      pdf.save(`${packageData.cvData?.personalInfo?.fullName || 'cv'}.pdf`);
 
-      // Apply smart sizing
-      const sizingMode = applySmartAutoSizing(cvElement);
-      
-      // If still overflowing after CSS adjustments, apply minimal scaling
-      setTimeout(() => {
-        const finalHeight = cvElement.scrollHeight;
-        const A4_HEIGHT_PX = 297 * 3.78;
-        
-        if (finalHeight > A4_HEIGHT_PX) {
-          const overflowRatio = finalHeight / A4_HEIGHT_PX;
-          let scaleFactor = 1;
-          
-          // Only scale if absolutely necessary
-          if (overflowRatio > 1.1) {
-            scaleFactor = 0.95;
-          } else if (overflowRatio > 1.05) {
-            scaleFactor = 0.98;
-          }
-          
-          if (scaleFactor < 1) {
-            console.log(`🎯 Applying minimal scale factor: ${scaleFactor}`);
-            cvElement.style.transform = `scale(${scaleFactor})`;
-            cvElement.style.transformOrigin = 'top center';
-            cvElement.style.width = `${210 / scaleFactor}mm`;
-          }
-        }
+      console.log('✅ CV downloaded successfully with smart auto-sizing');
 
-        console.log('📄 Final CV Element ready for PDF with smart sizing:', sizingMode);
+      root.unmount();
+      document.body.removeChild(tempContainer);
+      resolve(true);
+    })
+    .catch((error) => {
+      console.error('❌ CV download failed:', error);
+      root.unmount();
+      document.body.removeChild(tempContainer);
+      resolve(false);
+    });
+};
 
-        html2canvas(cvElement, {
-          scale: 2,
-          useCORS: true,
-          logging: true,
-          backgroundColor: '#ffffff',
-          width: cvElement.scrollWidth,
-          height: cvElement.scrollHeight,
-        })
-          .then((canvas) => {
-            const imgData = canvas.toDataURL('image/png');
-            const pdf = new jsPDF('p', 'mm', 'a4');
-            const pdfWidth = pdf.internal.pageSize.getWidth();
-            const pdfHeight = pdf.internal.pageSize.getHeight();
-
-            const imgProps = pdf.getImageProperties(imgData);
-            const ratio = imgProps.width / imgProps.height;
-            let pdfImageHeight = pdfWidth / ratio;
-
-            // Ensure the image fits within A4 height
-            if (pdfImageHeight > pdfHeight) {
-              pdfImageHeight = pdfHeight;
-            }
-
-            pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfImageHeight);
-            pdf.save(`${packageData.cvData?.personalInfo?.fullName || 'cv'}.pdf`);
-
-            console.log('✅ CV downloaded successfully with smart auto-sizing');
-            
-            // Clean up
-            root.unmount();
-            document.body.removeChild(tempContainer);
-            resolve(true);
-          })
-          .catch((error) => {
-            console.error('❌ CV download failed:', error);
-            root.unmount();
-            document.body.removeChild(tempContainer);
-            resolve(false);
-          });
-      }, 100); 
-    }, 2000);
+// Wait a bit for initial render, then start the load-check loop
+setTimeout(() => {
+  waitForImagesAndCapture();
+}, 600);
   });
 };
 
