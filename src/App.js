@@ -3386,6 +3386,7 @@ const CVBuilder = () => {
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
   const [selectedPackage, setSelectedPackage] = useState(null);
 
+
  
   // ADD COVER LETTER STATE VARIABLES
   const [coverLetter, setCoverLetter] = useState('');
@@ -4061,6 +4062,8 @@ const renderTemplate = (customData = null) => {
 
 const App = () => {
   const [showBuilder, setShowBuilder] = useState(false);
+  const [pendingDownloadPackage, setPendingDownloadPackage] = useState(null);
+
 
 useEffect(() => {
   const checkUrlAndState = () => {
@@ -4073,7 +4076,6 @@ useEffect(() => {
 
     setShowBuilder(isBuilderHash);
 
-    // ✅ Coming back from Yoco with payment success
     if (hash.includes('payment=success')) {
       console.log('✅ Payment success detected from URL');
 
@@ -4082,16 +4084,21 @@ useEffect(() => {
       if (pendingPackageRaw) {
         try {
           const packageData = JSON.parse(pendingPackageRaw);
-          
-          // Force update localStorage with payment data to ensure CVBuilder uses it
+
+          // Make sure latest CV data is stored
           localStorage.setItem('cvData', JSON.stringify(packageData.cvData));
-          
-          // Wait longer for everything to load
+
+          // Save it into React state so we can trigger download from a button
+          setPendingDownloadPackage(packageData);
+
+          // Try auto-download (works on desktop)
           setTimeout(() => {
             triggerFileDownloads(packageData);
-          }, 3000); // Increased delay
+          }, 3000);
 
-          alert('Payment successful! Your CV and cover letter will start downloading.');
+          alert(
+            'Payment successful! If your CV and cover letter do not download automatically, tap the "Download CV & Cover Letter" button at the top of the page.'
+          );
         } catch (e) {
           console.error('❌ Could not parse pendingPackage:', e);
           localStorage.removeItem('pendingPackage');
@@ -4100,12 +4107,6 @@ useEffect(() => {
         alert('Payment successful, but no files were queued. Please rebuild your CV.');
       }
 
-      window.location.hash = '#builder';
-    }
-
-    // ❌ Cancel / failed
-    if (hash.includes('payment=cancel') || hash.includes('payment=failed')) {
-      alert('Payment was cancelled or failed. You have not been charged.');
       window.location.hash = '#builder';
     }
   };
@@ -4123,19 +4124,46 @@ useEffect(() => {
 
 
 
-  // Normal routing: either show builder or landing page
-  if (showBuilder) {
-    return <CVBuilder />;
-  }
-
+// Normal routing: either show builder or landing page
+if (showBuilder) {
   return (
-    <LandingPage
-      onGetStarted={() => {
-        setShowBuilder(true);
-        window.location.hash = '#builder';
-      }}
-    />
+    <>
+      {pendingDownloadPackage && (
+        <div
+          className="download-notice"
+          style={{
+            padding: '10px 16px',
+            background: '#fff3cd',
+            borderBottom: '1px solid #ffeeba',
+          }}
+        >
+          <p style={{ marginBottom: '8px' }}>
+            Payment successful. If your files did not download automatically, tap the button below.
+          </p>
+          <button
+            onClick={() => {
+              triggerFileDownloads(pendingDownloadPackage);
+            }}
+            style={{
+              padding: '8px 16px',
+              background: '#28a745',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+            }}
+          >
+            Download CV &amp; Cover Letter
+          </button>
+        </div>
+      )}
+      <CVBuilder />
+    </>
   );
+}
+
+  return <LandingPage onGetStarted={() => setShowBuilder(true)} />;
+
 };
 
 export default App;
