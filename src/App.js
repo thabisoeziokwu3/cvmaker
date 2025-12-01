@@ -262,16 +262,18 @@ const downloadCVAfterPayment = (packageData) => {
     }
 
     const noImageTemplates = ['Bold Modern', 'Tech Innovator', 'Startup Entrepreneur', 'Minimal Tech'];
+
     const templateProps = noImageTemplates.includes(packageData.selectedTemplate || 'Classic Professional') 
       ? { 
-          cvData: packageData.cvData, 
+          cvData: packageData.cvData,
           selectedColor: packageData.selectedColor || '#2c3e50'
         } 
       : { 
-          cvData: packageData.cvData, 
-          profileImage: null,
+          cvData: packageData.cvData,
+          profileImage: packageData.profileImage || null,   // ✅ use the saved image
           selectedColor: packageData.selectedColor || '#2c3e50'
         };
+
 
     root.render(
       React.createElement(TemplateComponent, templateProps)
@@ -606,12 +608,34 @@ const downloadCoverLetterAfterPayment = (packageData) => {
         rawText = buildBasicCoverLetterText(company, position, dataToUse);
       } else {
 
-        if (packageData.aiCoverLetter) {
-          rawText = packageData.aiCoverLetter;
-        } else {
-          rawText = buildBasicCoverLetterText(company, position, dataToUse);
-        }
+      if (packageData.aiCoverLetter && packageData.aiCoverLetter.trim()) {
+        // Use AI-generated text if it exists and is not empty
+        rawText = packageData.aiCoverLetter;
+      } else {
+        // Fallback to basic template-based cover letter
+        rawText = buildBasicCoverLetterText(company, position, dataToUse);
       }
+
+    }
+    if (!rawText || !rawText.trim()) {
+  // Absolute fallback so the user ALWAYS gets a cover letter
+  const dateLine = new Date().toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+
+  rawText = `
+${dateLine}
+
+Dear Hiring Manager,
+
+I am excited to apply for the ${position || 'role'} at ${company || 'your company'}. Based on my experience and skills, I believe I can add meaningful value to your team.
+
+Warm Regards,
+${fullName}
+  `.trim();
+}
 
 
       const finalText = cleanCoverLetterText(rawText, fullName, company);
@@ -753,16 +777,18 @@ const handlePayment = async () => {
     if (data.success) {
       console.log('✅ Checkout session created, saving package & redirecting...');
 
-      const packageData = {
-        cvData: latestCvData,
-        coverLetterCompany,
-        coverLetterPosition,
-        packageType: selectedPackage,
-        selectedTemplate: savedTemplate,
-        selectedColor: savedColor,
-        aiCoverLetter: data.aiCoverLetter || null,
-        timestamp: Date.now(),
-      };
+    const packageData = {
+      cvData: latestCvData,
+      coverLetterCompany,
+      coverLetterPosition,
+      packageType: selectedPackage,
+      selectedTemplate: savedTemplate,
+      selectedColor: savedColor,
+      aiCoverLetter: data.aiCoverLetter || null,
+      profileImage: latestCvData.profileImage || null,   // ✅ include the uploaded image
+      timestamp: Date.now(),
+    };
+
 
       localStorage.setItem('pendingPackage', JSON.stringify(packageData));
       window.location.href = data.redirectUrl;
@@ -4123,8 +4149,6 @@ useEffect(() => {
 }, []);
 
 
-
-// Normal routing: either show builder or landing page
 if (showBuilder) {
   return (
     <>
