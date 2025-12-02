@@ -352,17 +352,28 @@ const waitForImagesAndCapture = (retries = 5) => {
       const pdfHeight = pdf.internal.pageSize.getHeight();
 
       const imgProps = pdf.getImageProperties(imgData);
-      const ratio = imgProps.width / imgProps.height;
-      let pdfImageHeight = pdfWidth / ratio;
+      const imgHeightMm = (imgProps.height * pdfWidth) / imgProps.width;
 
-      if (pdfImageHeight > pdfHeight) {
-        pdfImageHeight = pdfHeight;
+      if (imgHeightMm <= pdfHeight) {
+        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, imgHeightMm);
+      } else {
+        let position = 0;
+        let remainingHeight = imgHeightMm;
+
+        pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeightMm);
+        remainingHeight -= pdfHeight;
+
+        while (remainingHeight > 0) {
+          position -= pdfHeight;
+          remainingHeight -= pdfHeight;
+          pdf.addPage();
+          pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeightMm);
+        }
       }
 
-      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfImageHeight);
       pdf.save(`${packageData.cvData?.personalInfo?.fullName || 'cv'}.pdf`);
 
-      console.log('✅ CV downloaded successfully with smart auto-sizing');
+      console.log('✅ CV downloaded successfully with smart auto-sizing and multipage support');
 
       root.unmount();
       document.body.removeChild(tempContainer);
@@ -376,7 +387,6 @@ const waitForImagesAndCapture = (retries = 5) => {
     });
 };
 
-// Wait a bit for initial render, then start the load-check loop
 setTimeout(() => {
   waitForImagesAndCapture();
 }, 600);
