@@ -443,86 +443,28 @@ ${dataToUse.personalInfo?.email || ''}${
 };
 
 
-const cleanCoverLetterText = (rawContent, fullName, company) => {
-  if (!rawContent) return '';
+function cleanCoverLetterText(text, fullName, company) {
+  if (!text) return '';
 
-  const currentDate = new Date().toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  });
+  let cleaned = text;
 
-  let lines = rawContent
-    .split('\n')
-    .map(l => l.trim())
-    .filter(l => l.length > 0);
+  cleaned = cleaned.replace(/Warm regards?,?\s*${fullName}/gi, '');
+  cleaned = cleaned.replace(/Warm regards?/gi, '');
+  cleaned = cleaned.replace(/Kind regards?/gi, '');
+  cleaned = cleaned.replace(/Sincerely/gi, '');
 
-  const removePatterns = [
-    /^[0-9].*(street|st\.|road|rd\.|avenue|ave\.|drive|dr\.|lane|ln\.|boulevard|blvd\.|close|crescent|south africa).*$/i,
-    /.*\b(city|state|province|zip|postal|code)\b.*/i,
-    /^\s*\+[0-9]{1,3}.*/,  
-    /\b\d{4,}/,            
-    /\[.*?\]/g             
-  ];
+  cleaned = cleaned.trim();
 
-  lines = lines.filter(line => {
-    return !removePatterns.some(pattern => pattern.test(line.toLowerCase()));
-  });
+  cleaned += `
 
- 
-  const dearIndex = lines.findIndex(l => l.toLowerCase().startsWith('dear'));
-  let bodyLines = dearIndex !== -1 ? lines.slice(dearIndex + 1) : lines;
+Warm regards,
+${fullName}`;
 
-
-  let paragraphs = [];
-  let buffer = [];
-
-  const pushBuffer = () => {
-    if (buffer.length > 0) {
-      paragraphs.push(buffer.join(' '));
-      buffer = [];
-    }
-  };
-
-  bodyLines.forEach(line => {
-    buffer.push(line);
-
-    // If line ends with sentence punctuation, force new paragraph
-    if (/[.!?]$/.test(line)) {
-      pushBuffer();
-    }
-  });
-
-  pushBuffer(); // flush last one
-
-  // Clean paragraphs
-  paragraphs = paragraphs.map(p =>
-    p
-      .replace(/\s+/g, ' ') // collapse double spaces
-      .trim()
-  );
-
-  // STEP 5: Construct final clean letter
-  const finalLetter = `
-${currentDate}
-
-Hiring Manager  
-${company}
-
-Dear Hiring Manager,
-
-${paragraphs.join('\n\n')}
-
-Warm Regards,  
-${fullName}
-`.trim();
-
-  return finalLetter;
-};
+  return cleaned.trim();
+}
 
 
 
-// 3) Save the cover letter string as a PDF
 const downloadCoverLetterPDF = (content, type, dataToUse) => {
   if (!content) {
     console.error('❌ No cover letter content to download');
