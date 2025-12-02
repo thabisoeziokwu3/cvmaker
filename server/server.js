@@ -21,27 +21,40 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-// Small helper to build a cover-letter prompt from cvData
+
 function buildCoverLetterPrompt(cvData, company, position) {
   const { personalInfo, professionalSummary, workExperience, skills } = cvData || {};
 
-  return (
-    `You are an assistant that writes professional cover letters.\n\n` +
-    `Use the candidate details below to write a clear, concise, and professional cover letter for the role "${position}" at "${company}".\n\n` +
-    `Candidate name: ${personalInfo?.fullName || ''}\n` +
-    `Email: ${personalInfo?.email || ''}\n` +
-    `Phone: ${personalInfo?.phone || ''}\n` +
-    `Location: ${personalInfo?.address || ''}\n` +
-    `Title/Profession: ${personalInfo?.profession || ''}\n\n` +
-    `Professional summary: ${professionalSummary || ''}\n\n` +
-    `Key skills: ${(skills || []).join(', ')}\n\n` +
-    `Most recent job: ${workExperience?.[0]?.jobTitle || ''} at ${
-      workExperience?.[0]?.company || ''
-    }\n` +
-    `Responsibilities: ${workExperience?.[0]?.description || ''}\n\n` +
-    `Write the letter in the first person, 3–5 paragraphs, friendly but professional tone, and do not leave any placeholders like [Company].`
-  );
+  return `
+You are an expert cover-letter writer.  
+Your job is to write a **natural, human-sounding, personalised cover letter** based ONLY on the user’s real CV data below.
+
+### STRICT RULES:
+- DO NOT repeat phrases.
+- DO NOT add fictional experience.
+- DO NOT use generic corporate-sounding filler.
+- Use a warm and confident tone.
+- Keep it concise: 3–4 short paragraphs.
+- Use the candidate’s **real skills and experience** to justify why they fit the role.
+- Only close ONCE with: "Warm regards, {fullName}" – no duplicates.
+- Do NOT add headers like "Hiring Manager" or repeat the date.
+- Address the letter to: "Dear Hiring Manager,".
+- Mention the company name and position naturally in the intro.
+- Make the writing conversational but still professional.
+- Write the letter in the first person, 3–5 paragraphs, friendly but professional tone, and do not leave any placeholders like [Company].
+
+### USER DATA:
+Name: ${personalInfo?.fullName || ''}
+Professional Summary: ${professionalSummary || ''}
+Work Experience: ${JSON.stringify(workExperience || [])}
+Skills: ${skills?.join(', ') || ''}
+Company: ${company}
+Position: ${position}
+
+Write the cover letter now:
+`;
 }
+
 
 // Health check
 app.get('/', (req, res) => {
@@ -276,3 +289,5 @@ app.use((req, res) => {
 app.listen(PORT, () => {
   console.log(`✅ Server running on http://localhost:${PORT}`);
 });
+
+

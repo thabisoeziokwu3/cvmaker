@@ -6,7 +6,6 @@ import jsPDF from 'jspdf';
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
 
  
-// Template preview images
 const templatePreviews = {
   'Classic Professional': '/images/classicprofessional.png',
   'Modern Minimalist': '/images/modernminimalist.png',
@@ -22,7 +21,7 @@ const templatePreviews = {
   'Minimal Tech': '/images/minimaltech.png'
 };
  
-// Professional color options
+
 const colorOptions = [
   { name: 'Classic Blue', value: '#2c3e50' },
   { name: 'Professional Navy', value: '#34495e' },
@@ -589,58 +588,64 @@ const downloadCoverLetterPDF = (content, type, dataToUse) => {
 const downloadCoverLetterAfterPayment = (packageData) => {
   return new Promise((resolve) => {
     setTimeout(() => {
-      const dataToUse = packageData.cvData || {};
-      const company = packageData.coverLetterCompany;
-      const position = packageData.coverLetterPosition;
-      const fullName = dataToUse.personalInfo?.fullName || 'Your Name';
+      try {
+        const dataToUse = packageData.cvData || {};
+        const company = packageData.coverLetterCompany || '';
+        const position = packageData.coverLetterPosition || '';
+        const fullName = dataToUse.personalInfo?.fullName || 'Your Name';
 
-      let rawText = '';
+        let rawText = '';
 
-      if (packageData.packageType === 'basic') {
+        // 1) Prefer AI text for AI package
+        const aiText =
+          typeof packageData.aiCoverLetter === 'string'
+            ? packageData.aiCoverLetter.trim()
+            : '';
 
-        rawText = buildBasicCoverLetterText(company, position, dataToUse);
-      } else {
+        if (packageData.packageType === 'ai' && aiText) {
+          console.log('🧠 Using AI cover letter text from packageData');
+          rawText = aiText;
+        } else {
+          console.log('✉️ Using basic template cover letter text');
+          rawText = buildBasicCoverLetterText(company, position, dataToUse);
+        }
 
-      if (packageData.aiCoverLetter && packageData.aiCoverLetter.trim()) {
-        // Use AI-generated text if it exists and is not empty
-        rawText = packageData.aiCoverLetter;
-      } else {
-        // Fallback to basic template-based cover letter
-        rawText = buildBasicCoverLetterText(company, position, dataToUse);
-      }
+        // 2) Absolute fallback so user ALWAYS gets a letter
+        if (!rawText || !rawText.trim()) {
+          const dateLine = new Date().toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+          });
 
-    }
-    if (!rawText || !rawText.trim()) {
-  // Absolute fallback so the user ALWAYS gets a cover letter
-  const dateLine = new Date().toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  });
-
-  rawText = `
+          rawText = `
 ${dateLine}
 
 Dear Hiring Manager,
 
-I am excited to apply for the ${position || 'role'} at ${company || 'your company'}. Based on my experience and skills, I believe I can add meaningful value to your team.
+I am excited to apply for the ${position || 'role'} at ${
+            company || 'your company'
+          }. Based on my experience and skills, I believe I can add meaningful value to your team.
 
-Warm Regards,
+Warm regards,
 ${fullName}
-  `.trim();
-}
+          `.trim();
+        }
 
+        const finalText = cleanCoverLetterText(rawText, fullName, company);
 
-      const finalText = cleanCoverLetterText(rawText, fullName, company);
+        downloadCoverLetterPDF(finalText, 'cover-letter', dataToUse);
 
-
-      downloadCoverLetterPDF(finalText, 'cover-letter', dataToUse);
-
-      console.log('✅ Cover letter downloaded successfully');
-      resolve(true);
+        console.log('✅ Cover letter downloaded successfully');
+        resolve(true);
+      } catch (err) {
+        console.error('❌ Cover letter download failed:', err);
+        resolve(false);
+      }
     }, 1000);
   });
 };
+
 
 
 // 5) Main function: trigger BOTH downloads and clean up localStorage
@@ -670,8 +675,10 @@ const DirectPaymentModal = ({
   selectedPackage, 
   cvData,
   coverLetterCompany,
-  coverLetterPosition 
+  coverLetterPosition,
+  coverLetter,
 }) => {
+
   const [isProcessing, setIsProcessing] = useState(false);
   const [yocoSDK, setYocoSDK] = useState(null);
   const [cardError, setCardError] = useState('');
@@ -742,8 +749,10 @@ const handlePayment = async () => {
 
     // Get the absolute latest data
     const latestCvData = JSON.parse(localStorage.getItem('cvData') || '{}');
-    const savedTemplate = localStorage.getItem('selectedTemplate') || 'Classic Professional';
-    const savedColor = localStorage.getItem('selectedColor') || '#2c3e50';
+    const savedTemplate =
+      localStorage.getItem('selectedTemplate') || 'Classic Professional';
+    const savedColor =
+      localStorage.getItem('selectedColor') || '#2c3e50';
 
     const response = await fetch(`${BACKEND_URL}/api/payment/process`, {
       method: 'POST',
@@ -754,21 +763,34 @@ const handlePayment = async () => {
         packageType: selectedPackage,
         amount: paymentOptions[selectedPackage].amount,
         cvData: latestCvData,
-        coverLetterCompany: coverLetterCompany,
-        coverLetterPosition: coverLetterPosition,
+        coverLetterCompany,
+        coverLetterPosition,
         selectedTemplate: savedTemplate,
-        selectedColor: savedColor
+        selectedColor: savedColor,
       }),
     });
 
     const data = await response.json();
+    console.log('🔎 /api/payment/process response:', data);
 
-    if (!response.ok) {
+    if (!response.ok || !data.success || !data.redirectUrl) {
       throw new Error(data.error || 'Failed to create checkout session');
     }
 
-    if (data.success) {
-      console.log('✅ Checkout session created, saving package & redirecting...');
+    // Normalise AI text from the server
+    const aiFromServer =
+      typeof data.aiCoverLetter === 'string'
+        ? data.aiCoverLetter.trim()
+        : '';
+
+    // Also reuse any AI text already generated in the app (AI preview)
+    const aiFromState =
+      typeof coverLetter === 'string'
+        ? coverLetter.trim()
+        : '';
+
+    // This is what we will store and later use for the PDF
+    const aiToStore = aiFromServer || aiFromState || null;
 
     const packageData = {
       cvData: latestCvData,
@@ -777,15 +799,17 @@ const handlePayment = async () => {
       packageType: selectedPackage,
       selectedTemplate: savedTemplate,
       selectedColor: savedColor,
-      aiCoverLetter: data.aiCoverLetter || null,
-      profileImage: latestCvData.profileImage || null,   // ✅ include the uploaded image
+      aiCoverLetter: aiToStore,
+      profileImage: latestCvData.profileImage || null,
       timestamp: Date.now(),
     };
 
+    console.log('💾 Saving pendingPackage to localStorage:', packageData);
 
-      localStorage.setItem('pendingPackage', JSON.stringify(packageData));
-      window.location.href = data.redirectUrl;
-    }
+    localStorage.setItem('pendingPackage', JSON.stringify(packageData));
+
+    // Redirect to Yoco checkout
+    window.location.href = data.redirectUrl;
   } catch (error) {
     console.error('❌ Checkout creation failed:', error);
     setCardError(error.message || 'Failed to initiate payment');
@@ -4064,7 +4088,9 @@ const renderTemplate = (customData = null) => {
         cvData={cvData}
         coverLetterCompany={coverLetterCompany}
         coverLetterPosition={coverLetterPosition}
+        coverLetter={coverLetter} 
       />
+
  
       {/* ADD COVER LETTER MODAL */}
       <CoverLetterModal 
