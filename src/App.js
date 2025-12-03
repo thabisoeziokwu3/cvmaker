@@ -100,10 +100,6 @@ const TemplateSelector = ({ selectedTemplate, onTemplateChange, selectedColor, o
   );
 };
 
-const isMobileDevice = () => /Mobi|Android|iPhone|iPad|iPod/i.test(
-  navigator.userAgent || ''
-);
-
 
 const downloadCVAfterPayment = (packageData) => {
   return new Promise((resolve) => {
@@ -627,26 +623,26 @@ ${fullName}
 
 
 
-// 5) Main function: trigger BOTH downloads and clean up localStorage
-const triggerFileDownloads = async (packageData) => {
-  if (!packageData) {
-    console.error('❌ triggerFileDownloads called with no packageData');
-    return;
-  }
+// // 5) Main function: trigger BOTH downloads and clean up localStorage
+// const triggerFileDownloads = async (packageData) => {
+//   if (!packageData) {
+//     console.error('❌ triggerFileDownloads called with no packageData');
+//     return;
+//   }
 
-  console.log('📄 Triggering downloads with packageData:', packageData);
+//   console.log('📄 Triggering downloads with packageData:', packageData);
 
-  const cvResult = await downloadCVAfterPayment(packageData);
-  const clResult = await downloadCoverLetterAfterPayment(packageData);
+//   const cvResult = await downloadCVAfterPayment(packageData);
+//   const clResult = await downloadCoverLetterAfterPayment(packageData);
 
-  if (cvResult && clResult) {
-    console.log('✅ All downloads completed. Cleaning up localStorage.');
-    localStorage.removeItem('pendingPackage');
-    localStorage.removeItem('paymentComplete');
-  } else {
-    console.warn('⚠️ One or more downloads failed. Keeping localStorage for retry.');
-  }
-};
+//   if (cvResult && clResult) {
+//     console.log('✅ All downloads completed. Cleaning up localStorage.');
+//     localStorage.removeItem('pendingPackage');
+//     localStorage.removeItem('paymentComplete');
+//   } else {
+//     console.warn('⚠️ One or more downloads failed. Keeping localStorage for retry.');
+//   }
+// };
 
 const DirectPaymentModal = ({ 
   isOpen, 
@@ -4105,30 +4101,27 @@ useEffect(() => {
 
       const pendingPackageRaw = localStorage.getItem('pendingPackage');
 
-      if (pendingPackageRaw) {
-        try {
-          const packageData = JSON.parse(pendingPackageRaw);
+    if (pendingPackageRaw) {
+      try {
+        const packageData = JSON.parse(pendingPackageRaw);
 
-          localStorage.setItem('cvData', JSON.stringify(packageData.cvData));
+        // Make sure latest CV data is stored
+        localStorage.setItem('cvData', JSON.stringify(packageData.cvData));
 
-          setPendingDownloadPackage(packageData);
+        // Save it into React state so we can show the banner + buttons
+        setPendingDownloadPackage(packageData);
 
-          if (!isMobileDevice()) {
-            setTimeout(() => {
-              triggerFileDownloads(packageData);
-            }, 3000);
-          }
-
-          alert(
-            'Payment successful! If your CV and cover letter do not download automatically, tap the "Download CV & Cover Letter" button at the top of the page.'
-          );
-        } catch (e) {
-          console.error('❌ Could not parse pendingPackage:', e);
-          localStorage.removeItem('pendingPackage');
-        }
-      } else {
-        alert('Payment successful, but no files were queued. Please rebuild your CV.');
+        alert(
+          'Payment successful! You can now download your CV and cover letter using the buttons at the top of the page.'
+        );
+      } catch (e) {
+        console.error('❌ Could not parse pendingPackage:', e);
+        localStorage.removeItem('pendingPackage');
       }
+    } else {
+      alert('Payment successful, but no files were queued. Please rebuild your CV.');
+    }
+
 
       window.location.hash = '#builder';
     }
@@ -4150,7 +4143,12 @@ const handleManualCVDownload = async () => {
     console.error('❌ No pending package for CV download');
     return;
   }
-  await downloadCVAfterPayment(pendingDownloadPackage);
+
+  try {
+    await downloadCVAfterPayment(pendingDownloadPackage);
+  } catch (err) {
+    console.error('❌ Error in manual CV download:', err);
+  }
 };
 
 const handleManualCoverLetterDownload = async () => {
@@ -4158,53 +4156,59 @@ const handleManualCoverLetterDownload = async () => {
     console.error('❌ No pending package for cover letter download');
     return;
   }
-  await downloadCoverLetterAfterPayment(pendingDownloadPackage);
+
+  try {
+    await downloadCoverLetterAfterPayment(pendingDownloadPackage);
+  } catch (err) {
+    console.error('❌ Error in manual cover letter download:', err);
+  }
 };
 
 
 if (showBuilder) {
   return (
     <>
-      {pendingDownloadPackage && (
-        <div
-          className="download-notice"
-          style={{
-            padding: '10px 16px',
-            background: '#fff3cd',
-            borderBottom: '1px solid #ffeeba',
-          }}
-        >
-          <p style={{ marginBottom: '8px' }}>
-            Payment successful. If your files did not download automatically, tap the buttons below to download them.
-          </p>
-          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-            <button
-              onClick={handleManualCVDownload}
-              style={{
-                padding: '6px 12px',
-                borderRadius: '4px',
-                border: '1px solid #856404',
-                background: '#fff',
-                cursor: 'pointer',
-              }}
-            >
-              Download CV
-            </button>
-            <button
-              onClick={handleManualCoverLetterDownload}
-              style={{
-                padding: '6px 12px',
-                borderRadius: '4px',
-                border: '1px solid #856404',
-                background: '#fff',
-                cursor: 'pointer',
-              }}
-            >
-              Download Cover Letter
-            </button>
-          </div>
-        </div>
-      )}
+{pendingDownloadPackage && (
+  <div
+    className="download-notice"
+    style={{
+      padding: '10px 16px',
+      background: '#fff3cd',
+      borderBottom: '1px solid #ffeeba',
+    }}
+  >
+    <p style={{ marginBottom: '8px' }}>
+      Payment successful. If your files did not download automatically, tap the buttons below to download them.
+    </p>
+    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+      <button
+        onClick={handleManualCVDownload}
+        style={{
+          padding: '8px 16px',
+          background: '#fff',
+          border: '1px solid #856404',
+          borderRadius: '4px',
+          cursor: 'pointer',
+        }}
+      >
+        Download CV
+      </button>
+      <button
+        onClick={handleManualCoverLetterDownload}
+        style={{
+          padding: '8px 16px',
+          background: '#fff',
+          border: '1px solid #856404',
+          borderRadius: '4px',
+          cursor: 'pointer',
+        }}
+      >
+        Download Cover Letter
+      </button>
+    </div>
+  </div>
+)}
+
 
       <CVBuilder />
     </>
