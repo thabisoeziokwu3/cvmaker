@@ -449,31 +449,44 @@ const cleanCoverLetterText = (text, fullName, company) => {
     lines.pop();
   }
 
-  // Remove trailing name line if it exactly matches the full name
-  if (fullName) {
-    const lowerName = fullName.toLowerCase();
-    if (
-      lines.length &&
-      lines[lines.length - 1].trim().toLowerCase() === lowerName
-    ) {
-      lines.pop();
-    }
-  }
+  const lowerName = fullName ? fullName.toLowerCase() : null;
 
-  // Remove trailing closing words like "Sincerely", "Warm regards", etc.
-  if (lines.length) {
-    const closings = [
-      'sincerely,',
-      'sincerely',
-      'kind regards,',
-      'kind regards',
-      'warm regards,',
-      'warm regards',
-      'regards,',
-      'regards',
-    ];
-    const lastLower = lines[lines.length - 1].trim().toLowerCase();
-    if (closings.includes(lastLower)) {
+  // All phrases we consider as “closings”
+  const closings = [
+    'sincerely',
+    'sincerely,',
+    'kind regards',
+    'kind regards,',
+    'warm regards',
+    'warm regards,',
+    'regards',
+    'regards,',
+    'best regards',
+    'best regards,',
+    'yours sincerely',
+    'yours sincerely,'
+  ];
+
+  const isClosingOrNameLine = (line) => {
+    const trimmed = line.trim();
+    if (!trimmed) return false;
+
+    const lower = trimmed.toLowerCase();
+
+    // Exact name line
+    if (lowerName && lower === lowerName) return true;
+
+    // Any closing phrase
+    return closings.includes(lower);
+  };
+
+  // Strip ALL trailing closing / name lines from the bottom
+  // (e.g. Sincerely + Name + Warm regards + Name, etc.)
+  while (lines.length && isClosingOrNameLine(lines[lines.length - 1])) {
+    lines.pop();
+
+    // Also remove extra blank line between body and the sign-off block
+    while (lines.length && lines[lines.length - 1].trim() === '') {
       lines.pop();
     }
   }
@@ -494,8 +507,6 @@ Warm regards,`;
 
   return cleaned.trim();
 };
-
-
 
 
 const downloadCoverLetterPDF = (content, type, dataToUse) => {
