@@ -99,7 +99,10 @@ const TemplateSelector = ({ selectedTemplate, onTemplateChange, selectedColor, o
     </div>
   );
 };
- 
+
+const isMobileDevice = () => /Mobi|Android|iPhone|iPad|iPod/i.test(
+  navigator.userAgent || ''
+);
 
 
 const downloadCVAfterPayment = (packageData) => {
@@ -4106,16 +4109,15 @@ useEffect(() => {
         try {
           const packageData = JSON.parse(pendingPackageRaw);
 
-          // Make sure latest CV data is stored
           localStorage.setItem('cvData', JSON.stringify(packageData.cvData));
 
-          // Save it into React state so we can trigger download from a button
           setPendingDownloadPackage(packageData);
 
-          // Try auto-download (works on desktop)
-          setTimeout(() => {
-            triggerFileDownloads(packageData);
-          }, 3000);
+          if (!isMobileDevice()) {
+            setTimeout(() => {
+              triggerFileDownloads(packageData);
+            }, 3000);
+          }
 
           alert(
             'Payment successful! If your CV and cover letter do not download automatically, tap the "Download CV & Cover Letter" button at the top of the page.'
@@ -4143,6 +4145,22 @@ useEffect(() => {
   };
 }, []);
 
+const handleManualCVDownload = async () => {
+  if (!pendingDownloadPackage) {
+    console.error('❌ No pending package for CV download');
+    return;
+  }
+  await downloadCVAfterPayment(pendingDownloadPackage);
+};
+
+const handleManualCoverLetterDownload = async () => {
+  if (!pendingDownloadPackage) {
+    console.error('❌ No pending package for cover letter download');
+    return;
+  }
+  await downloadCoverLetterAfterPayment(pendingDownloadPackage);
+};
+
 
 if (showBuilder) {
   return (
@@ -4157,25 +4175,37 @@ if (showBuilder) {
           }}
         >
           <p style={{ marginBottom: '8px' }}>
-            Payment successful. If your files did not download automatically, tap the button below.
+            Payment successful. If your files did not download automatically, tap the buttons below to download them.
           </p>
-          <button
-            onClick={() => {
-              triggerFileDownloads(pendingDownloadPackage);
-            }}
-            style={{
-              padding: '8px 16px',
-              background: '#28a745',
-              color: '#fff',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-            }}
-          >
-            Download CV &amp; Cover Letter
-          </button>
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+            <button
+              onClick={handleManualCVDownload}
+              style={{
+                padding: '6px 12px',
+                borderRadius: '4px',
+                border: '1px solid #856404',
+                background: '#fff',
+                cursor: 'pointer',
+              }}
+            >
+              Download CV
+            </button>
+            <button
+              onClick={handleManualCoverLetterDownload}
+              style={{
+                padding: '6px 12px',
+                borderRadius: '4px',
+                border: '1px solid #856404',
+                background: '#fff',
+                cursor: 'pointer',
+              }}
+            >
+              Download Cover Letter
+            </button>
+          </div>
         </div>
       )}
+
       <CVBuilder />
     </>
   );
