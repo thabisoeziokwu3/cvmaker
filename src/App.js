@@ -393,7 +393,7 @@ setTimeout(() => {
 };
 
 
-const buildBasicCoverLetterText = (company, position, dataToUse) => {
+const buildBasicCoverLetterText = (company, position, dataToUse) => { 
   if (!company || !position) {
     console.error('❌ Company and position required for cover letter');
     return '';
@@ -428,40 +428,74 @@ Dear Hiring Manager,
 
 I am writing to apply for the ${position} position at ${company}. ${summary}
 
-As ${firstRole}, I have developed skills in ${skillsSummary}.
+As ${firstRole}, I have developed skills in ${skillsSummary}, which I believe would add value to your team.
 
-I am impressed by ${company}'s work and believe I can contribute to your team. Thank you for considering my application.
-
-Sincerely,
-
-${dataToUse.personalInfo?.fullName || 'Your Name'}
-${dataToUse.personalInfo?.email || ''}${
-    dataToUse.personalInfo?.phone ? ` | ${dataToUse.personalInfo.phone}` : ''
-  }${
-    dataToUse.personalInfo?.linkedin ? ` | LinkedIn: ${dataToUse.personalInfo.linkedin}` : ''
-  }`;
+I am impressed by ${company}'s work and would welcome the opportunity to contribute to your goals. Thank you for considering my application.
+`.trim();
 };
 
 
-function cleanCoverLetterText(text, fullName, company) {
+
+const cleanCoverLetterText = (text, fullName, company) => {
   if (!text) return '';
 
-  let cleaned = text;
+  // Normalise line endings
+  let cleaned = text.replace(/\r\n/g, '\n');
 
-  cleaned = cleaned.replace(/Warm regards?,?\s*${fullName}/gi, '');
-  cleaned = cleaned.replace(/Warm regards?/gi, '');
-  cleaned = cleaned.replace(/Kind regards?/gi, '');
-  cleaned = cleaned.replace(/Sincerely/gi, '');
+  // Split into lines
+  let lines = cleaned.split('\n');
 
-  cleaned = cleaned.trim();
+  // Trim trailing empty lines
+  while (lines.length && lines[lines.length - 1].trim() === '') {
+    lines.pop();
+  }
 
-  cleaned += `
+  // Remove trailing name line if it exactly matches the full name
+  if (fullName) {
+    const lowerName = fullName.toLowerCase();
+    if (
+      lines.length &&
+      lines[lines.length - 1].trim().toLowerCase() === lowerName
+    ) {
+      lines.pop();
+    }
+  }
+
+  // Remove trailing closing words like "Sincerely", "Warm regards", etc.
+  if (lines.length) {
+    const closings = [
+      'sincerely,',
+      'sincerely',
+      'kind regards,',
+      'kind regards',
+      'warm regards,',
+      'warm regards',
+      'regards,',
+      'regards',
+    ];
+    const lastLower = lines[lines.length - 1].trim().toLowerCase();
+    if (closings.includes(lastLower)) {
+      lines.pop();
+    }
+  }
+
+  cleaned = lines.join('\n').trim();
+
+  // Append ONE clean closing
+  if (fullName) {
+    cleaned += `
 
 Warm regards,
 ${fullName}`;
+  } else {
+    cleaned += `
+
+Warm regards,`;
+  }
 
   return cleaned.trim();
-}
+};
+
 
 
 
