@@ -598,11 +598,16 @@ ${dateLine}
 
 Dear Hiring Manager,
 
-I am excited to apply for the ${position || 'role'} at ${
-            company || 'your company'
-          }. Based on my experience and skills, I believe I can add meaningful value to your team.
+I am writing to apply for the ${position || 'role'} position at ${company || 'your company'}. With my background and experience, I am confident that I can contribute meaningfully to your team's success.
 
-Warm regards,
+My professional experience has equipped me with valuable skills and knowledge that align with the requirements of this position. I have consistently demonstrated strong performance in my previous roles and am eager to bring that same dedication and expertise to your organization.
+
+I have been impressed by ${company || 'your company'}'s achievements and reputation in the industry. The opportunity to contribute to your team while growing professionally is particularly compelling.
+
+I am enthusiastic about the possibility of joining your team and believe that my experience would make me a valuable asset to ${company || 'your company'}. Thank you for considering my application. I have attached my CV for your review and look forward to the possibility of discussing my qualifications further.
+
+Sincerely,
+
 ${fullName}
           `.trim();
         }
@@ -728,20 +733,16 @@ const handlePayment = async () => {
       throw new Error(data.error || 'Failed to create checkout session');
     }
 
-    // 1) Normalise AI text from the server
-    const aiFromServer =
-      typeof data.aiCoverLetter === 'string'
-        ? data.aiCoverLetter.trim()
-        : '';
+    let aiToStore = null;
 
-    // 2) Reuse any AI text already generated in the app (coverLetter state)
-    const aiFromState =
-      typeof coverLetter === 'string'
-        ? coverLetter.trim()
-        : '';
+    if (selectedPackage === 'ai') {
+      const aiFromServer =
+        typeof data.aiCoverLetter === 'string'
+          ? data.aiCoverLetter.trim()
+          : '';
 
-    // 3) Decide what to store (prefer server, then state, otherwise null)
-    const aiToStore = aiFromServer || aiFromState || null;
+      aiToStore = aiFromServer || null;
+    }
 
     const packageData = {
       cvData: latestCvData,
@@ -754,6 +755,7 @@ const handlePayment = async () => {
       profileImage: latestCvData.profileImage || null,
       timestamp: Date.now(),
     };
+
 
     console.log('💾 Saving pendingPackage to localStorage:', packageData);
 
@@ -3708,7 +3710,6 @@ const handleInputChange = useCallback((section, field, value, index = null) => {
     setCvData({ ...cvData, interests: updatedInterests });
   }, [cvData]);
  
-  // ADD REFERENCE FUNCTIONS
 const addReference = useCallback(() => {
   setCvData(prevCvData => ({
     ...prevCvData,
@@ -3802,7 +3803,6 @@ const removeReference = useCallback((id) => {
       });
       setProfileImage(null);
       setSelectedColor('#2c3e50');
-      // ADD COVER LETTER RESET
       setCoverLetter('');
       setCoverLetterCompany('');
       setCoverLetterPosition('');
@@ -3913,7 +3913,6 @@ const renderTemplate = (customData = null) => {
             currentCertification={currentCertification}
             currentLanguage={currentLanguage}
             currentInterest={currentInterest}
-            // ... keep all your existing props exactly as they were
             handleInputChange={handleInputChange}
             addExperience={addExperience}
             removeExperience={removeExperience}
@@ -4078,14 +4077,11 @@ useEffect(() => {
       const pendingPackageRaw = localStorage.getItem('pendingPackage');
 
       if (pendingPackageRaw) {
-        // ✅ Normal path – use the package saved before redirect
         try {
           const packageData = JSON.parse(pendingPackageRaw);
 
-          // Make sure latest CV data is stored
           localStorage.setItem('cvData', JSON.stringify(packageData.cvData || {}));
 
-          // Save into React state so we can show the banner + buttons
           setPendingDownloadPackage(packageData);
 
           alert(
@@ -4099,7 +4095,6 @@ useEffect(() => {
           );
         }
       } else {
-        // ⚠️ Fallback: try reconstruct from cvData if pendingPackage is missing
         console.warn('⚠️ No pendingPackage found – trying to rebuild from localStorage');
 
         const cvDataRaw = localStorage.getItem('cvData');
@@ -4115,7 +4110,7 @@ useEffect(() => {
               cvData,
               coverLetterCompany: '',
               coverLetterPosition: '',
-              packageType: 'basic', // safe default
+              packageType: 'basic',
               selectedTemplate,
               selectedColor,
               aiCoverLetter: null,
@@ -4136,7 +4131,6 @@ useEffect(() => {
             );
           }
         } else {
-          // Absolute worst-case fallback
           alert(
             'Payment was successful, but we could not find your CV data. Please rebuild your CV.'
           );
