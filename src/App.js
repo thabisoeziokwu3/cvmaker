@@ -622,28 +622,6 @@ ${fullName}
 };
 
 
-
-// // 5) Main function: trigger BOTH downloads and clean up localStorage
-// const triggerFileDownloads = async (packageData) => {
-//   if (!packageData) {
-//     console.error('❌ triggerFileDownloads called with no packageData');
-//     return;
-//   }
-
-//   console.log('📄 Triggering downloads with packageData:', packageData);
-
-//   const cvResult = await downloadCVAfterPayment(packageData);
-//   const clResult = await downloadCoverLetterAfterPayment(packageData);
-
-//   if (cvResult && clResult) {
-//     console.log('✅ All downloads completed. Cleaning up localStorage.');
-//     localStorage.removeItem('pendingPackage');
-//     localStorage.removeItem('paymentComplete');
-//   } else {
-//     console.warn('⚠️ One or more downloads failed. Keeping localStorage for retry.');
-//   }
-// };
-
 const DirectPaymentModal = ({ 
   isOpen, 
   onClose, 
@@ -720,14 +698,12 @@ const handlePayment = async () => {
   setCardError('');
 
   try {
-    console.log('🔄 Creating Yoco checkout session...');
+    console.log('🔄 Creating Yoco checkout session.');
 
     // Get the absolute latest data
     const latestCvData = JSON.parse(localStorage.getItem('cvData') || '{}');
-    const savedTemplate =
-      localStorage.getItem('selectedTemplate') || 'Classic Professional';
-    const savedColor =
-      localStorage.getItem('selectedColor') || '#2c3e50';
+    const savedTemplate = localStorage.getItem('selectedTemplate') || 'Classic Professional';
+    const savedColor = localStorage.getItem('selectedColor') || '#2c3e50';
 
     const response = await fetch(`${BACKEND_URL}/api/payment/process`, {
       method: 'POST',
@@ -752,19 +728,19 @@ const handlePayment = async () => {
       throw new Error(data.error || 'Failed to create checkout session');
     }
 
-    // Normalise AI text from the server
+    // 1) Normalise AI text from the server
     const aiFromServer =
       typeof data.aiCoverLetter === 'string'
         ? data.aiCoverLetter.trim()
         : '';
 
-    // Also reuse any AI text already generated in the app (AI preview)
+    // 2) Reuse any AI text already generated in the app (coverLetter state)
     const aiFromState =
       typeof coverLetter === 'string'
         ? coverLetter.trim()
         : '';
 
-    // This is what we will store and later use for the PDF
+    // 3) Decide what to store (prefer server, then state, otherwise null)
     const aiToStore = aiFromServer || aiFromState || null;
 
     const packageData = {
@@ -783,7 +759,6 @@ const handlePayment = async () => {
 
     localStorage.setItem('pendingPackage', JSON.stringify(packageData));
 
-    // Redirect to Yoco checkout
     window.location.href = data.redirectUrl;
   } catch (error) {
     console.error('❌ Checkout creation failed:', error);
@@ -791,6 +766,7 @@ const handlePayment = async () => {
     setIsProcessing(false);
   }
 };
+
 
 
   if (!isOpen) return null;
@@ -868,13 +844,13 @@ const handlePayment = async () => {
 
         <div className="payment-note">
           <small>
-            💡 <strong>Note:</strong> Your CV and cover letter will download automatically after payment.
+            💡 <strong>Note:</strong> Your CV and cover letter will be ready for download after payment.
           </small>
         </div>
       </div>
     </div>
   );
-};
+}
  
 // ADD COVER LETTER MODAL COMPONENT
 const CoverLetterModal = ({ 
@@ -4101,27 +4077,71 @@ useEffect(() => {
 
       const pendingPackageRaw = localStorage.getItem('pendingPackage');
 
-    if (pendingPackageRaw) {
-      try {
-        const packageData = JSON.parse(pendingPackageRaw);
+      if (pendingPackageRaw) {
+        // ✅ Normal path – use the package saved before redirect
+        try {
+          const packageData = JSON.parse(pendingPackageRaw);
 
-        // Make sure latest CV data is stored
-        localStorage.setItem('cvData', JSON.stringify(packageData.cvData));
+          // Make sure latest CV data is stored
+          localStorage.setItem('cvData', JSON.stringify(packageData.cvData || {}));
 
-        // Save it into React state so we can show the banner + buttons
-        setPendingDownloadPackage(packageData);
+          // Save into React state so we can show the banner + buttons
+          setPendingDownloadPackage(packageData);
 
-        alert(
-          'Payment successful! You can now download your CV and cover letter using the buttons at the top of the page.'
-        );
-      } catch (e) {
-        console.error('❌ Could not parse pendingPackage:', e);
-        localStorage.removeItem('pendingPackage');
+          alert(
+            'Payment successful! You can now download your CV and cover letter using the buttons at the top of the page.'
+          );
+        } catch (e) {
+          console.error('❌ Could not parse pendingPackage:', e);
+          localStorage.removeItem('pendingPackage');
+          alert(
+            'Payment was successful, but we could not prepare your files automatically. Please rebuild your CV and contact support if this happens again.'
+          );
+        }
+      } else {
+        // ⚠️ Fallback: try reconstruct from cvData if pendingPackage is missing
+        console.warn('⚠️ No pendingPackage found – trying to rebuild from localStorage');
+
+        const cvDataRaw = localStorage.getItem('cvData');
+        if (cvDataRaw) {
+          try {
+            const cvData = JSON.parse(cvDataRaw);
+            const selectedTemplate =
+              localStorage.getItem('selectedTemplate') || 'Classic Professional';
+            const selectedColor =
+              localStorage.getItem('selectedColor') || '#2c3e50';
+
+            const reconstructedPackage = {
+              cvData,
+              coverLetterCompany: '',
+              coverLetterPosition: '',
+              packageType: 'basic', // safe default
+              selectedTemplate,
+              selectedColor,
+              aiCoverLetter: null,
+              profileImage: cvData.profileImage || null,
+              timestamp: Date.now(),
+            };
+
+            localStorage.setItem('pendingPackage', JSON.stringify(reconstructedPackage));
+            setPendingDownloadPackage(reconstructedPackage);
+
+            alert(
+              'Payment successful! Your files are ready. Use the download buttons at the top of the page to get your CV and cover letter.'
+            );
+          } catch (e) {
+            console.error('❌ Could not reconstruct package from cvData:', e);
+            alert(
+              'Payment was successful, but we could not prepare your files. Please rebuild your CV and contact support if this keeps happening.'
+            );
+          }
+        } else {
+          // Absolute worst-case fallback
+          alert(
+            'Payment was successful, but we could not find your CV data. Please rebuild your CV.'
+          );
+        }
       }
-    } else {
-      alert('Payment successful, but no files were queued. Please rebuild your CV.');
-    }
-
 
       window.location.hash = '#builder';
     }
@@ -4137,6 +4157,7 @@ useEffect(() => {
     window.removeEventListener('load', checkUrlAndState);
   };
 }, []);
+
 
 const handleManualCVDownload = async () => {
   if (!pendingDownloadPackage) {
