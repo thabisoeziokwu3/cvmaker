@@ -18,7 +18,11 @@ const templatePreviews = {
   'Academic Scholar': '/images/academicscholar.png',
   'Executive Leadership': '/images/executiveleadership.png',
   'Startup Entrepreneur': '/images/startupentrepreneur.png',
-  'Minimal Tech': '/images/minimaltech.png'
+  'Minimal Tech': '/images/minimaltech.png',
+  'Modern Dark Header': '/images/template-modern-dark-header.webp',
+  'Academic Sidebar': '/images/template-academic-sidebar.webp',
+  'Profile Photo Split': '/images/template-profile-photo-split.webp',
+  'Teacher Sidebar': '/images/template-teacher-sidebar.webp',
 };
  
 
@@ -40,7 +44,7 @@ const colorOptions = [
 // Template Selector Component
 const TemplateSelector = ({ selectedTemplate, onTemplateChange, selectedColor, onColorChange }) => {
   // Define templates without profile image
-  const noImageTemplates = ['Bold Modern', 'Tech Innovator', 'Startup Entrepreneur', 'Minimal Tech'];
+  const noImageTemplates = ['Bold Modern', 'Tech Innovator', 'Startup Entrepreneur',  'Modern Dark Header', 'Minimal Tech', 'Academic Sidebar'];
  
   return (
     <div className="template-selector">
@@ -255,11 +259,23 @@ const downloadCVAfterPayment = (packageData) => {
       case 'Minimal Tech':
         TemplateComponent = MinimalTechTemplate;
         break;
+      case 'Modern Dark Header':
+        TemplateComponent = ModernDarkHeaderTemplate;
+        break;
+      case 'Academic Sidebar':
+        TemplateComponent = AcademicSidebarTemplate;
+        break;
+      case 'Profile Photo Split':
+        TemplateComponent = ProfilePhotoSplitTemplate;
+        break;
+      case 'Teacher Sidebar':
+        TemplateComponent = TeacherSidebarTemplate;
+        break;
       default:
         TemplateComponent = ClassicProfessionalTemplate;
     }
 
-    const noImageTemplates = ['Bold Modern', 'Tech Innovator', 'Startup Entrepreneur', 'Minimal Tech'];
+    const noImageTemplates = ['Bold Modern', 'Tech Innovator', 'Startup Entrepreneur', 'Modern Dark Header', 'Minimal Tech', 'Academic Sidebar'];
     const templateProps = noImageTemplates.includes(packageData.selectedTemplate || 'Classic Professional') 
       ? { 
           cvData: packageData.cvData, 
@@ -1013,7 +1029,7 @@ const CVForm = React.memo(({
         </div>
       </div>
 
-      {!['Bold Modern', 'Tech Innovator', 'Startup Entrepreneur', 'Minimal Tech'].includes(selectedTemplate) ? (
+      {!['Bold Modern', 'Tech Innovator', 'Startup Entrepreneur', 'Minimal Tech', 'Modern Dark Header', 'Academic Sidebar'].includes(selectedTemplate) ? (
         <div className="form-group">
           <h3>Profile Image (Optional)</h3>
           <div className="tip-block">
@@ -3025,9 +3041,824 @@ const ElegantTraditionalTemplate = ({ cvData, profileImage, selectedColor }) => 
     </div>
   );
 };
- 
-// ... include all your other templates exactly as they were
- 
+
+// Modern Dark Header – Max Schumann style
+const ModernDarkHeaderTemplate = ({ cvData, profileImage, selectedColor }) => {
+  const fullName = cvData.personalInfo.fullName || 'Your Name';
+  const profession = cvData.personalInfo.profession || 'Professional Title';
+
+  return (
+    <div
+      className="cv-template modern-dark-header"
+      style={{ '--primary-color': selectedColor }}
+    >
+      {/* Top dark header */}
+      <header className="mdh-header">
+        <div className="mdh-header-left">
+          <div className="mdh-name-block">
+            <div className="mdh-name-line">
+              <span className="mdh-name">{fullName.split(' ')[0]}</span>
+              <span className="mdh-surname">
+                {fullName.split(' ').slice(1).join(' ') || ''}
+              </span>
+            </div>
+            <div className="mdh-title">{profession}</div>
+          </div>
+        </div>
+
+        <div className="mdh-header-right">
+          {cvData.personalInfo.address && (
+            <div className="mdh-contact-line">{cvData.personalInfo.address}</div>
+          )}
+          {cvData.personalInfo.email && (
+            <div className="mdh-contact-line">{cvData.personalInfo.email}</div>
+          )}
+          {cvData.personalInfo.phone && (
+            <div className="mdh-contact-line">{cvData.personalInfo.phone}</div>
+          )}
+          {cvData.personalInfo.linkedin && (
+            <div className="mdh-contact-line">{cvData.personalInfo.linkedin}</div>
+          )}
+        </div>
+      </header>
+
+      {/* Body with left labels and right content */}
+      <main className="mdh-body">
+        {/* Objective */}
+        {(cvData.professionalSummary || '').trim() && (
+          <section className="mdh-row">
+            <div className="mdh-label">Objective</div>
+            <div className="mdh-content">
+              <p>{cvData.professionalSummary}</p>
+            </div>
+          </section>
+        )}
+
+        {/* Education */}
+        {cvData.education.some(e => e.institution || e.degree) && (
+          <section className="mdh-row">
+            <div className="mdh-label">Education</div>
+            <div className="mdh-content">
+              {cvData.education.map((edu, idx) =>
+                (edu.institution || edu.degree) ? (
+                  <div key={idx} className="mdh-edu-item">
+                    <div className="mdh-edu-dates">
+                      {edu.startYear && edu.endYear
+                        ? `${edu.startYear} – ${edu.endYear}`
+                        : edu.graduationYear || ''}
+                    </div>
+                    <div className="mdh-edu-main">
+                      <div className="mdh-edu-degree">
+                        {edu.degree || 'Qualification'}
+                        {edu.field ? `, ${edu.field}` : ''}
+                      </div>
+                      {edu.institution && (
+                        <div className="mdh-edu-inst">{edu.institution}</div>
+                      )}
+                    </div>
+                  </div>
+                ) : null
+              )}
+            </div>
+          </section>
+        )}
+
+        {/* Skills */}
+        {cvData.skills.length > 0 && (
+          <section className="mdh-row">
+            <div className="mdh-label">Skills</div>
+            <div className="mdh-content">
+              <ul className="mdh-bullet-list">
+                {cvData.skills.map((skill, idx) => (
+                  <li key={idx}>{skill}</li>
+                ))}
+              </ul>
+            </div>
+          </section>
+        )}
+
+                {/* Languages */}
+        {cvData.languages && cvData.languages.length > 0 && (
+          <section className="mdh-row">
+            <div className="mdh-label">Languages</div>
+            <div className="mdh-content">
+              <ul className="mdh-bullet-list">
+                {cvData.languages.map((lang, idx) => (
+                  <li key={idx}>
+                    {lang.name}
+                    {lang.proficiency ? ` – ${lang.proficiency}` : ''}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </section>
+        )}
+
+
+        {/* Certifications */}
+        {cvData.certifications && cvData.certifications.length > 0 && (
+          <section className="mdh-row">
+            <div className="mdh-label">Certifications</div>
+            <div className="mdh-content">
+              <ul className="mdh-bullet-list">
+                {cvData.certifications.map((cert, idx) => (
+                  <li key={idx}>
+                    {cert.name}
+                    {cert.issuer && ` – ${cert.issuer}`}
+                    {cert.year && ` (${cert.year})`}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </section>
+        )}
+
+        {/* Interests */}
+        {cvData.interests && cvData.interests.length > 0 && (
+          <section className="mdh-row">
+            <div className="mdh-label">Interests</div>
+            <div className="mdh-content">
+              <ul className="mdh-bullet-list">
+                {cvData.interests.map((interest, idx) => (
+                  <li key={idx}>{interest}</li>
+                ))}
+              </ul>
+            </div>
+          </section>
+        )}
+
+
+        {/* Work Experience */}
+        {cvData.workExperience.some(e => e.jobTitle || e.company) && (
+          <section className="mdh-row">
+            <div className="mdh-label">Work Experience</div>
+            <div className="mdh-content">
+              {cvData.workExperience.map((exp, idx) =>
+                (exp.jobTitle || exp.company) ? (
+                  <div key={idx} className="mdh-exp-item">
+                    <div className="mdh-exp-header">
+                      <div className="mdh-exp-role">
+                        {exp.jobTitle || 'Job Title'}
+                      </div>
+                      <div className="mdh-exp-dates">
+                        {exp.startDate} – {exp.endDate || 'Present'}
+                      </div>
+                    </div>
+                    <div className="mdh-exp-company">
+                      {exp.company}
+                      {exp.location ? `, ${exp.location}` : ''}
+                    </div>
+                    {exp.description && (
+                      <p className="mdh-exp-desc">{exp.description}</p>
+                    )}
+                  </div>
+                ) : null
+              )}
+            </div>
+          </section>
+        )}
+
+
+                {/* References */}
+        {cvData.references &&
+          cvData.references.length > 0 &&
+          cvData.references.some(ref => ref.name || ref.company || ref.email || ref.phone) && (
+            <section className="mdh-row">
+              <div className="mdh-label">References</div>
+              <div className="mdh-content">
+                <ul className="mdh-bullet-list">
+                  {cvData.references.map((ref, idx) =>
+                    (ref.name || ref.company || ref.email || ref.phone) ? (
+                      <li key={idx}>
+                        {ref.name && <strong>{ref.name}</strong>}
+                        {(ref.position || ref.company) && (
+                          <>
+                            {' '}
+                            – {ref.position}
+                            {ref.company && ` at ${ref.company}`}
+                          </>
+                        )}
+                        {ref.email && <> | {ref.email}</>}
+                        {ref.phone && <> | {ref.phone}</>}
+                      </li>
+                    ) : null
+                  )}
+                </ul>
+              </div>
+            </section>
+          )}
+
+      </main>
+    </div>
+  );
+};
+
+
+
+// Academic Sidebar – David Taylor style
+const AcademicSidebarTemplate = ({ cvData, profileImage, selectedColor }) => {
+  const fullName = cvData.personalInfo.fullName || 'Your Name';
+  const profession = cvData.personalInfo.profession || 'Research Assistant';
+
+  return (
+    <div
+      className="cv-template academic-sidebar"
+      style={{ '--primary-color': selectedColor }}
+    >
+      {/* Top centred name */}
+      <header className="as-header">
+        <h1>{fullName}</h1>
+        <p className="as-subtitle">{profession}</p>
+      </header>
+
+      <div className="as-body">
+        {/* Left sidebar */}
+        <aside className="as-sidebar">
+          {/* Optional circular photo at top (layout stays same if missing) */}
+          {/* <div className="as-photo-wrapper">
+            <div className="as-photo-circle">
+              {profileImage ? (
+                <img src={profileImage} alt="Profile" />
+              ) : (
+                <span className="as-photo-initials">
+                  {fullName.charAt(0) || 'Y'}
+                </span>
+              )}
+            </div>
+          </div> */}
+
+          {/* Contact */}
+          <section className="as-section">
+            <h2>Contact</h2>
+            {cvData.personalInfo.address && (
+              <p>{cvData.personalInfo.address}</p>
+            )}
+            {cvData.personalInfo.phone && <p>{cvData.personalInfo.phone}</p>}
+            {cvData.personalInfo.email && <p>{cvData.personalInfo.email}</p>}
+            {cvData.personalInfo.linkedin && (
+              <p>{cvData.personalInfo.linkedin}</p>
+            )}
+          </section>
+
+          {/* Skills */}
+          {cvData.skills.length > 0 && (
+            <section className="as-section">
+              <h2>Skills</h2>
+              <ul>
+                {cvData.skills.map((s, idx) => (
+                  <li key={idx}>{s}</li>
+                ))}
+              </ul>
+            </section>
+          )}
+
+                    {/* Certifications */}
+          {cvData.certifications && cvData.certifications.length > 0 && (
+            <section className="as-section">
+              <h2>Certifications</h2>
+              <ul>
+                {cvData.certifications.map((cert, idx) => (
+                  <li key={idx}>
+                    {cert.name}
+                    {cert.issuer && ` – ${cert.issuer}`}
+                    {cert.year && ` (${cert.year})`}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+
+          {/* Interests */}
+          {cvData.interests && cvData.interests.length > 0 && (
+            <section className="as-section">
+              <h2>Interests</h2>
+              <ul>
+                {cvData.interests.map((interest, idx) => (
+                  <li key={idx}>{interest}</li>
+                ))}
+              </ul>
+            </section>
+          )}
+
+          {/* References */}
+          {cvData.references &&
+            cvData.references.length > 0 &&
+            cvData.references.some(
+              ref => ref.name || ref.company || ref.email || ref.phone
+            ) && (
+              <section className="as-section">
+                <h2>References</h2>
+                <ul>
+                  {cvData.references.map((ref, idx) =>
+                    (ref.name || ref.company || ref.email || ref.phone) ? (
+                      <li key={idx}>
+                        {ref.name && <strong>{ref.name}</strong>}
+                        {(ref.position || ref.company) && (
+                          <>
+                            {' '}
+                            – {ref.position}
+                            {ref.company && ` at ${ref.company}`}
+                          </>
+                        )}
+                        {ref.email && <> | {ref.email}</>}
+                        {ref.phone && <> | {ref.phone}</>}
+                      </li>
+                    ) : null
+                  )}
+                </ul>
+              </section>
+            )}
+
+
+          {/* Languages */}
+          {cvData.languages.length > 0 && (
+            <section className="as-section">
+              <h2>Languages</h2>
+              {cvData.languages.map((lang, idx) => (
+                <div key={idx}>
+                  {lang.name} – {lang.proficiency}
+                </div>
+              ))}
+            </section>
+          )}
+        </aside>
+
+        {/* Right main column */}
+        <main className="as-main">
+          {(cvData.professionalSummary || '').trim() && (
+            <section className="as-main-section">
+              <h2>Objective</h2>
+              <p>{cvData.professionalSummary}</p>
+            </section>
+          )}
+
+          {cvData.education.some(e => e.institution || e.degree || e.field) && (
+            <section className="as-section">
+              <h2>Education</h2>
+              {cvData.education.map((edu, idx) =>
+                (edu.institution || edu.degree || edu.field) ? (
+                  <div key={idx} className="as-edu-item">
+                    {/* Degree */}
+                    {edu.degree && (
+                      <div className="as-edu-degree">{edu.degree}</div>
+                    )}
+
+                    {/* Institution */}
+                    {edu.institution && (
+                      <div className="as-edu-inst">{edu.institution}</div>
+                    )}
+
+                    {/* Field of Study */}
+                    {edu.field && (
+                      <div className="as-edu-field">{edu.field}</div>
+                    )}
+
+                    {/* Year */}
+                    {edu.graduationYear && (
+                      <div className="as-edu-year">{edu.graduationYear}</div>
+                    )}
+                  </div>
+                ) : null
+              )}
+            </section>
+          )}
+
+
+          {cvData.workExperience.some(e => e.jobTitle || e.company) && (
+            <section className="as-main-section">
+              <h2>Work Experience</h2>
+              {cvData.workExperience.map((exp, idx) =>
+                (exp.jobTitle || exp.company) ? (
+                  <div key={idx} className="as-exp-item">
+                    <div className="as-exp-header">
+                      <div className="as-exp-role">
+                        {exp.jobTitle || 'Position'}
+                      </div>
+                      <div className="as-exp-dates">
+                        {exp.startDate} – {exp.endDate || 'Present'}
+                      </div>
+                    </div>
+                    <div className="as-exp-company">
+                      {exp.company}
+                      {exp.location ? `, ${exp.location}` : ''}
+                    </div>
+                    {exp.description && (
+                      <ul className="as-exp-list">
+                        {exp.description.split('\n').map((line, i) =>
+                          line.trim() ? <li key={i}>{line}</li> : null
+                        )}
+                      </ul>
+                    )}
+                  </div>
+                ) : null
+              )}
+            </section>
+          )}
+        </main>
+      </div>
+    </div>
+  );
+};
+
+
+// Profile Photo Split – Rylan Adams style (fixed: contact in sidebar)
+const ProfilePhotoSplitTemplate = ({ cvData, profileImage, selectedColor }) => {
+  const fullName = cvData.personalInfo.fullName || 'Your Name';
+  const profession = cvData.personalInfo.profession || 'Basic CV';
+
+  const { phone, email, linkedin, address } = cvData.personalInfo;
+
+  return (
+    <div
+      className="cv-template profile-photo-split"
+      style={{ '--primary-color': selectedColor }}
+    >
+      {/* Top banner: photo + name only */}
+      <header className="pps-header">
+        <div className="pps-header-left">
+          <div className="pps-photo-circle">
+            {profileImage ? (
+              <img src={profileImage} alt="Profile" />
+            ) : (
+              <span className="pps-photo-initials">
+                {fullName.charAt(0) || 'Y'}
+              </span>
+            )}
+          </div>
+        </div>
+
+        <div className="pps-header-right">
+          <h1>
+            {fullName.split(' ')[0]}{' '}
+            <span className="pps-surname">
+              {fullName.split(' ').slice(1).join(' ')}
+            </span>
+          </h1>
+          <p className="pps-subtitle">{profession}</p>
+          {/* no contact details here anymore */}
+        </div>
+      </header>
+
+      {/* Two-column body */}
+      <div className="pps-body">
+        {/* LEFT SIDEBAR – Contact + Skills + Education */}
+        <aside className="pps-left">
+          {(phone || email || linkedin || address) && (
+            <section className="pps-section">
+              <h2>Contact</h2>
+              <ul className="pps-contact-list">
+                {phone && <li>{phone}</li>}
+                {email && <li>{email}</li>}
+                {linkedin && <li>{linkedin}</li>}
+                {address && <li>{address}</li>}
+              </ul>
+            </section>
+          )}
+
+          {cvData.skills.length > 0 && (
+            <section className="pps-section">
+              <h2>Skills</h2>
+              <ul className="pps-list">
+                {cvData.skills.map((s, idx) => (
+                  <li key={idx}>{s}</li>
+                ))}
+              </ul>
+            </section>
+          )}
+
+
+                    {/* Certifications */}
+          {cvData.certifications && cvData.certifications.length > 0 && (
+            <section className="pps-section">
+              <h2>Certifications</h2>
+              <ul className="pps-list">
+                {cvData.certifications.map((cert, idx) => (
+                  <li key={idx}>
+                    {cert.name}
+                    {cert.issuer && ` – ${cert.issuer}`}
+                    {cert.year && ` (${cert.year})`}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+
+          {/* Interests */}
+          {cvData.interests && cvData.interests.length > 0 && (
+            <section className="pps-section">
+              <h2>Interests</h2>
+              <ul className="pps-list">
+                {cvData.interests.map((interest, idx) => (
+                  <li key={idx}>{interest}</li>
+                ))}
+              </ul>
+            </section>
+          )}
+
+                    {cvData.languages && cvData.languages.length > 0 && (
+            <section className="pps-section">
+              <h2>Languages</h2>
+              <ul className="pps-list">
+                {cvData.languages.map((lang, idx) => (
+                  <li key={idx}>
+                    {lang.name}
+                    {lang.proficiency ? ` – ${lang.proficiency}` : ''}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+        </aside>
+
+        {/* RIGHT COLUMN – Profile & Experience */}
+        <main className="pps-right">
+          {(cvData.professionalSummary || '').trim() && (
+            <section className="pps-section">
+              <h2>Profile</h2>
+              <p>{cvData.professionalSummary}</p>
+            </section>
+          )}
+
+          {cvData.workExperience.some(e => e.jobTitle || e.company) && (
+            <section className="pps-section">
+              <h2>Experience</h2>
+              {cvData.workExperience.map((exp, idx) =>
+                (exp.jobTitle || exp.company) ? (
+                  <div key={idx} className="pps-exp-item">
+                    <div className="pps-exp-header">
+                      <div className="pps-exp-role">
+                        {exp.jobTitle || 'Job Title'}
+                      </div>
+                      <div className="pps-exp-meta">
+                        {exp.company && <span>{exp.company}</span>}
+                        {exp.location && <span>{exp.location}</span>}
+                        <span>
+                          {exp.startDate} – {exp.endDate || 'Present'}
+                        </span>
+                      </div>
+                    </div>
+                    {exp.description && (
+                      <p className="pps-exp-desc">{exp.description}</p>
+                    )}
+                  </div>
+                ) : null
+              )}
+            </section>
+          )}
+
+          {cvData.education.some(e => e.institution || e.degree) && (
+            <section className="pps-section">
+              <h2>Education</h2>
+              {cvData.education.map((edu, idx) =>
+                (edu.institution || edu.degree) ? (
+                  <div key={idx} className="pps-edu-item">
+                    <div className="pps-edu-degree">{edu.degree}</div>
+                    {edu.institution && (
+                      <div className="pps-edu-inst">{edu.institution}</div>
+                    )}
+                    <div className="pps-edu-meta">
+                      {edu.field && <span>{edu.field}</span>}
+                      {edu.graduationYear && (
+                        <span>{edu.graduationYear}</span>
+                      )}
+                    </div>
+                  </div>
+                ) : null
+              )}
+            </section>
+          )}
+
+          
+
+                    {/* References */}
+          {cvData.references &&
+            cvData.references.length > 0 &&
+            cvData.references.some(
+              ref => ref.name || ref.company || ref.email || ref.phone
+            ) && (
+              <section className="pps-section">
+                <h2>References</h2>
+                <ul className="pps-list">
+                  {cvData.references.map((ref, idx) =>
+                    (ref.name || ref.company || ref.email || ref.phone) ? (
+                      <li key={idx}>
+                        {ref.name && <strong>{ref.name}</strong>}
+                        {(ref.position || ref.company) && (
+                          <>
+                            {' '}
+                            – {ref.position}
+                            {ref.company && ` at ${ref.company}`}
+                          </>
+                        )}
+                        {ref.email && <> | {ref.email}</>}
+                        {ref.phone && <> | {ref.phone}</>}
+                      </li>
+                    ) : null
+                  )}
+                </ul>
+              </section>
+            )}
+
+        </main>
+      </div>
+    </div>
+  );
+};
+
+
+
+// Teacher Sidebar – Zola Aufderhar style
+const TeacherSidebarTemplate = ({ cvData, profileImage, selectedColor }) => {
+  const fullName = cvData.personalInfo.fullName || 'Your Name';
+
+  return (
+    <div
+      className="cv-template teacher-sidebar"
+      style={{ '--primary-color': selectedColor }}
+    >
+      <div className="ts-body">
+        {/* Left colored sidebar */}
+        <aside className="ts-sidebar">
+          <div className="ts-photo-wrapper">
+            <div className="ts-photo-circle">
+              {profileImage ? (
+                <img src={profileImage} alt="Profile" />
+              ) : (
+                <span className="ts-photo-initials">
+                  {fullName.charAt(0) || 'Y'}
+                </span>
+              )}
+            </div>
+          </div>
+
+          <section className="ts-section">
+            <h2>Contact</h2>
+            {cvData.personalInfo.phone && <p>Phone: {cvData.personalInfo.phone}</p>}
+            {cvData.personalInfo.email && <p>Email: {cvData.personalInfo.email}</p>}
+            {cvData.personalInfo.address && (
+              <p>Address: {cvData.personalInfo.address}</p>
+            )}
+            {cvData.personalInfo.linkedin && (
+              <p>LinkedIn: {cvData.personalInfo.linkedin}</p>
+            )}
+          </section>
+
+          {cvData.skills.length > 0 && (
+            <section className="ts-section">
+              <h2>Key Skills</h2>
+              <ul>
+                {cvData.skills.map((s, idx) => (
+                  <li key={idx}>{s}</li>
+                ))}
+              </ul>
+            </section>
+          )}
+
+                    {cvData.languages && cvData.languages.length > 0 && (
+            <section className="ts-section">
+              <h2>Languages</h2>
+              <ul>
+                {cvData.languages.map((lang, idx) => (
+                  <li key={idx}>
+                    {lang.name}
+                    {lang.proficiency ? ` – ${lang.proficiency}` : ''}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+
+
+          {cvData.certifications.length > 0 && (
+            <section className="ts-section">
+              <h2>Certifications</h2>
+              <ul>
+                {cvData.certifications.map((c, idx) => (
+                  <li key={idx}>{c.name}</li>
+                ))}
+              </ul>
+            </section>
+          )}
+
+          {cvData.interests && cvData.interests.length > 0 && (
+            <section className="ts-section">
+              <h2>Interests</h2>
+              <ul>
+                {cvData.interests.map((interest, idx) => (
+                  <li key={idx}>{interest}</li>
+                ))}
+              </ul>
+            </section>
+          )}
+
+        </aside>
+
+        {/* Right main content */}
+        <main className="ts-main">
+          <header className="ts-header">
+            <h1>{fullName}</h1>
+            <p className="ts-subtitle">
+              {cvData.personalInfo.profession || 'Teacher CV'}
+            </p>
+          </header>
+
+          {(cvData.professionalSummary || '').trim() && (
+            <section className="ts-main-section">
+              <h2>Profile Summary</h2>
+              <p>{cvData.professionalSummary}</p>
+            </section>
+          )}
+
+          {/* Education timeline-style */}
+          {cvData.education.some(e => e.institution || e.degree) && (
+            <section className="ts-main-section">
+              <h2>Education</h2>
+              <div className="ts-timeline">
+                {cvData.education.map((edu, idx) =>
+                  (edu.institution || edu.degree) ? (
+                    <div key={idx} className="ts-timeline-item">
+                      <div className="ts-timeline-dot" />
+                      <div className="ts-timeline-content">
+                        <div className="ts-edu-degree">{edu.degree}</div>
+                        {edu.institution && (
+                          <div className="ts-edu-inst">{edu.institution}</div>
+                        )}
+                        <div className="ts-edu-meta">
+                          {edu.field && <span>{edu.field}</span>}
+                          {edu.graduationYear && (
+                            <span>{edu.graduationYear}</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ) : null
+                )}
+              </div>
+            </section>
+          )}
+
+          {/* Teaching Experience */}
+          {cvData.workExperience.some(e => e.jobTitle || e.company) && (
+            <section className="ts-main-section">
+              <h2>Experience</h2>
+              {cvData.workExperience.map((exp, idx) =>
+                (exp.jobTitle || exp.company) ? (
+                  <div key={idx} className="ts-exp-item">
+                    <div className="ts-exp-header">
+                      <div>
+                        <div className="ts-exp-role">
+                          {exp.jobTitle || 'Teacher'}
+                        </div>
+                        <div className="ts-exp-school">
+                          {exp.company}
+                          {exp.location ? `, ${exp.location}` : ''}
+                        </div>
+                      </div>
+                      <div className="ts-exp-dates">
+                        {exp.startDate} – {exp.endDate || 'Present'}
+                      </div>
+                    </div>
+                    {exp.description && (
+                      <p className="ts-exp-desc">{exp.description}</p>
+                    )}
+                  </div>
+                ) : null
+              )}
+            </section>
+          )}
+
+          {cvData.references &&
+            cvData.references.length > 0 &&
+            cvData.references.some(
+              ref => ref.name || ref.company || ref.email || ref.phone
+            ) && (
+              <section className="ts-main-section">
+                <h2>References</h2>
+                {cvData.references.map((ref, idx) =>
+                  (ref.name || ref.company || ref.email || ref.phone) ? (
+                    <div key={idx} className="ts-reference-item">
+                      {ref.name && <strong>{ref.name}</strong>}
+                      {(ref.position || ref.company) && (
+                        <div>
+                          {ref.position}
+                          {ref.company && ` – ${ref.company}`}
+                        </div>
+                      )}
+                      {ref.email && <div>{ref.email}</div>}
+                      {ref.phone && <div>{ref.phone}</div>}
+                    </div>
+                  ) : null
+                )}
+              </section>
+            )}
+
+        </main>
+      </div>
+    </div>
+  );
+};
+
+
 const LandingPage = ({ onGetStarted }) => {
   const featuredTemplates = ['Classic Professional', 'Tech Innovator', 'Creative Arts', 'Executive Leadership', 'Modern Minimalist', 'Startup Entrepreneur'];
 
@@ -3865,7 +4696,7 @@ const handleDownloadWithAICoverLetter = () => {
 
  
 const renderTemplate = (customData = null) => {
-  const noImageTemplates = ['Bold Modern', 'Tech Innovator', 'Startup Entrepreneur', 'Minimal Tech'];
+  const noImageTemplates = ['Bold Modern', 'Tech Innovator', 'Startup Entrepreneur', 'Minimal Tech', 'Modern Dark Header', 'Academic Sidebar'];
   
   const dataToUse = customData || cvData;
   const profileImageToUse = customData ? null : profileImage; 
@@ -3899,6 +4730,14 @@ const renderTemplate = (customData = null) => {
       return <StartupEntrepreneurTemplate {...templateProps} />;
     case 'Minimal Tech':
       return <MinimalTechTemplate {...templateProps} />;
+    case 'Modern Dark Header':
+      return <ModernDarkHeaderTemplate {...templateProps} />;
+    case 'Academic Sidebar':
+      return <AcademicSidebarTemplate {...templateProps} />;
+    case 'Profile Photo Split':
+      return <ProfilePhotoSplitTemplate {...templateProps} />;
+    case 'Teacher Sidebar':
+      return <TeacherSidebarTemplate {...templateProps} />;
     default:
       return <ClassicProfessionalTemplate {...templateProps} />;
   }
